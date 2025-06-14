@@ -1,0 +1,7 @@
+title: JtD OpenSCAD Template
+description: A starter template for a Jeykll site using the Just the Docs OpenSCAD flavour theme!
+theme: just-the-docs
+color_scheme: openscad-dark
+
+aux_links:
+  Template Repository: https://github.com/CameronBrooks11/just-the-docs-openscad
