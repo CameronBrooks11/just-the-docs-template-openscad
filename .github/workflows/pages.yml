@@ -38,7 +38,6 @@ jobs:
           ruby-version: "3.3" # Not needed with a .ruby-version file
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
           cache-version: 0 # Increment this number if you need to re-download cached gems
-        working-directory: docs
 
       - name: Setup Pages
         id: pages
@@ -46,10 +45,9 @@ jobs:
 
       - name: Build with Jekyll
         # Runs inside docs/, outputs into docs/_site
-        working-directory: docs
         run: |
-          bundle exec jekyll build \
-            --baseurl "${{ steps.pages.outputs.base_path }}"
+          cd docs
+          bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: production
 
