@@ -1,7 +1,7 @@
 title: JtD OpenSCAD Template
 description: A starter template for a Jekyll site…
 theme: just-the-docs
-color_scheme: openscad-light
+color_scheme: openscad-light # or openscad-dark
 baseurl: "/just-the-docs-template-openscad"
 permalink: pretty
 repository: "CameronBrooks11/just-the-docs-template-openscad"
