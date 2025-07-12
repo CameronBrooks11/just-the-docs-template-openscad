@@ -1,8 +1,9 @@
 ---
-title: Developer
-nav_order: 4
+title: Library Architecture
+parent: Developer
+nav_order: 5
 ---
 
-# Developer
+# Library Architecture
 
 These are the dev docs
