@@ -3,6 +3,8 @@ description: A starter template for a Jeykll site using the Just the Docs OpenSC
 theme: just-the-docs
 color_scheme: openscad-light # or openscad-dark
 
+baseurl: "/just-the-docs-template-openscad"
+
 permalink: pretty
 
 defaults:
