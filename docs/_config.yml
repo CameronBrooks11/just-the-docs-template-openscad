@@ -14,30 +14,6 @@ defaults:
     values:
       layout: "default" # use the default layout for all unspecified pages
 
-# Enable or disable the side/mobile menu globally
-# Nav menu can also be selectively enabled or disabled using page variables or the minimal layout
-nav_enabled: true
-
-callouts_level: quiet # or loud
-callouts:
-  highlight:
-    color: grey-dk
-  important:
-    title: Important
-    color: blue
-  new:
-    title: New
-    color: green
-  note:
-    title: Note
-    color: purple
-  warning:
-    title: Warning
-    color: red
-
-mermaid:
-  version: "11.8.1" # Must an available version from https://cdn.jsdelivr.net/npm/mermaid/
-
 # Enable or disable the site search
 # Supports true (default) or false
 search_enabled: true
@@ -67,5 +43,34 @@ search:
   # Focus the search input by pressing `ctrl + focus_shortcut_key` (or `cmd + focus_shortcut_key` on macOS)
   focus_shortcut_key: "k"
 
+mermaid:
+  version: "11.8.1" # Must an available version from https://cdn.jsdelivr.net/npm/mermaid/
+
 aux_links:
   Template Repository: https://github.com/CameronBrooks11/just-the-docs-template-openscad
+
+# Enable or disable the side/mobile menu globally
+# Nav menu can also be selectively enabled or disabled using page variables or the minimal layout
+nav_enabled: true
+
+callouts_level: quiet # or loud
+callouts:
+  highlight:
+    color: grey-dk
+  important:
+    title: Important
+    color: blue
+  new:
+    title: New
+    color: green
+  note:
+    title: Note
+    color: purple
+  warning:
+    title: Warning
+    color: red
+
+plugins:
+  - jekyll-seo-tag
+  - jekyll-github-metadata
+  - jekyll-include-cache
