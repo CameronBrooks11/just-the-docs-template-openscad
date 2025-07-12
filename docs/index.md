@@ -11,7 +11,7 @@ Welcome to the **{{ site.title }}** documentation!
 ## Overview
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/CameronBrooks11/just-the-docs-template-openscad/pages.yml?branch=main)](https://github.com/CameronBrooks11/just-the-docs-template-openscad/actions)
-[![License](https://img.shields.io/github/license/CameronBrooks11/just-the-docs-template-openscad)](https://github.com/CameronBrooks11/just-the-docs-template-openscad/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/CameronBrooks11/just-the-docs-template-openscad?branch=main)](https://github.com/CameronBrooks11/just-the-docs-template-openscad/blob/main/LICENSE)
 [![Last Commit](https://img.shields.io/github/last-commit/CameronBrooks11/just-the-docs-template-openscad)](https://github.com/CameronBrooks11/just-the-docs-template-openscad/commits/main)
 
 This landing page should give:
