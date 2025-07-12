@@ -3,5 +3,14 @@ description: A starter template for a Jeykll site using the Just the Docs OpenSC
 theme: just-the-docs
 color_scheme: openscad-light # or openscad-dark
 
+permalink: pretty
+
+defaults:
+  - scope:
+      path: "" # all files since we are already inside the docs directory
+      type: pages # target is page files
+    values:
+      layout: "default" # use the default layout for all unspecified pages
+
 aux_links:
   Template Repository: https://github.com/CameronBrooks11/just-the-docs-template-openscad

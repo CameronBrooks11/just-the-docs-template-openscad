@@ -1,8 +1,11 @@
 ---
-title: Developer
-nav_order: 5
+title: Developer Guide
+nav_order: 7
 ---
 
-# Developer
+# Developer Guide
 
-These are the dev docs
+For those who want to _contribute_ or extend your library:
+
+- [Architecture](architecture.md)
+- [Coding Conventions](coding-conventions.md)

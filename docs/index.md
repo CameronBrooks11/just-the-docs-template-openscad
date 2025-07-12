@@ -4,6 +4,35 @@ layout: home
 nav_order: 1
 ---
 
+# {{ site.title }}
+
+Welcome to the **{{ site.title }}** documentation!
+
+## Overview
+
+[![Build Status](https://img.shields.io/github/actions/workflow/status/CameronBrooks11/just-the-docs-template-openscad/pages.yml?branch=main)](https://github.com/CameronBrooks11/just-the-docs-template-openscad/actions)
+[![License](https://img.shields.io/github/license/CameronBrooks11/just-the-docs-template-openscad)](https://github.com/CameronBrooks11/just-the-docs-template-openscad/blob/main/LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/CameronBrooks11/just-the-docs-template-openscad)](https://github.com/CameronBrooks11/just-the-docs-template-openscad/commits/main)
+
+This landing page should give:
+
+1. **One-sentence elevator pitch** of your project.
+2. **Badges** (build status, version, license, etc.).
+3. A very brief **“What’s in this docs”** overview.
+4. Links to “Getting Started” and other major sections.
+
+---
+
+## Quick Links
+
+- [Getting Started](getting-started)
+- [FAQ](faq)
+- [Contribute](contribute)
+
+---
+
+## Just the Docs OpenSCAD Jekyll Template
+
 This is a _bare-minimum_ template to create a Jekyll site that uses the [Just the Docs] theme. You can easily set the created site to be published on [GitHub Pages] – the [README] file explains how to do that, along with other details.
 
 If [Jekyll] is installed on your computer, you can also build and preview the created site _locally_. This lets you test changes before committing them, and avoids waiting for GitHub Pages.[^1] And you will be able to deploy your local build to a different platform than GitHub Pages.

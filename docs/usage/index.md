@@ -1,8 +1,11 @@
 ---
 title: Usage
-nav_order: 3
+nav_order: 4
 ---
 
 # Usage
 
-These are the usage docs
+This section shows how to actually _use_ your library:
+
+- [Basic Usage](basic-usage)
+- [Advanced Usage](advanced-usage)
