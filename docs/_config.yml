@@ -52,7 +52,7 @@ aux_links:
 # Nav menu can also be selectively enabled or disabled using page variables or the minimal layout
 nav_enabled: true
 
-callouts_level: quiet # or loud
+callouts_level: quiet # or loud which is suggested when using dark mode theme for better contrast
 callouts:
   highlight:
     color: grey-dk
