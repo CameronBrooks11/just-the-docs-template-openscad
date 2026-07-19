@@ -1,0 +1,6 @@
+{%- comment -%}
+  Just-the-Docs footer extension point. Loads the progressive-enhancement script
+  for {% include openscad.html %}. It attaches one delegated listener and is a
+  no-op on pages without an embed.
+{%- endcomment -%}
+<script src="{{ '/assets/js/openscad-embed.js' | relative_url }}" defer></script>

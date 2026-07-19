@@ -4,13 +4,14 @@ parent: Examples
 nav_order: 2
 ---
 
-# Example 2 — an embedded interactive model
+# Example 2 — an embedded model
 
-This page embeds a live, in-browser OpenSCAD model. Drag to orbit, and use the
-**customizer panel** to change its parameters and re-render — no OpenSCAD
-install required.
+This page embeds an OpenSCAD model, **lightweight by default**: it shows a
+pre-rendered poster you click to load a ~0.6 MB rotatable 3D view — no OpenSCAD
+install, no in-browser compiler. Once loaded, use **Customize (live)** to switch
+to the full in-browser customizer and change parameters.
 
-{% include openscad.html model="demo" height="520" title="Parametric Demo" %}
+{% include openscad.html model="demo" live="demo-live" height="520" title="Parametric Demo" %}
 
 The model above is [`models/demo.scad`](https://github.com/CameronBrooks11/just-the-docs-template-openscad/blob/main/models/demo.scad):
 
@@ -35,14 +36,22 @@ rounded_box(length, width, height, radius);
 ## How the embed works
 
 1. The model lives at `models/demo.scad` in this repo.
-2. [`openscad-publish.yml`](https://github.com/CameronBrooks11/just-the-docs-template-openscad/blob/main/openscad-publish.yml)
-   maps it to a mount path (`/models/demo/`) and a surface (`viewer`).
-3. On deploy, the [openscad-web](https://github.com/CameronBrooks11/openscad-web)
-   GitHub Action assembles that model into the site — **served from this same
-   site**, with no dependency on any external host.
-4. The page embeds it with a one-line Liquid include:
+2. On deploy, [`.github/workflows/pages.yml`](https://github.com/CameronBrooks11/just-the-docs-template-openscad/blob/main/.github/workflows/pages.yml)
+   pre-renders it to an OFF geometry + PNG poster with the OpenSCAD CLI.
+3. [`openscad-publish.yml`](https://github.com/CameronBrooks11/just-the-docs-template-openscad/blob/main/openscad-publish.yml)
+   publishes **two surfaces**: a light `static` one at `/models/demo/` (the
+   default) and a live `customizer` at `/models/demo-live/` (the upgrade).
+4. The [openscad-web](https://github.com/CameronBrooks11/openscad-web) GitHub
+   Action assembles both into the site — **served from this same site**, no
+   external host. The `static` mount is self-contained and light (~0.6 MB); the
+   compiler runtime lives only in the `customizer` mount and loads only if a
+   reader upgrades. (With several live models, those share one runtime on disk.)
+5. The page embeds it with a one-line Liquid include:
 
-   {% raw %}`{% include openscad.html model="demo" height="520" title="Parametric Demo" %}`{% endraw %}
+   {% raw %}`{% include openscad.html model="demo" live="demo-live" height="520" title="Parametric Demo" %}`{% endraw %}
 
 The `// [min:max]` comments in the source drive the customizer sliders, and the
-`/* [Group] */` headers become collapsible sections in the panel.
+`/* [Group] */` headers become collapsible sections in the live panel.
+
+For a light-only embed, drop `live=`; for the live customizer by default, use
+`surface="customizer"`.

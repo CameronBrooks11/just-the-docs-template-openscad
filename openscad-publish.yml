@@ -2,17 +2,30 @@
 # Consumed by the openscad-web GitHub Action in .github/workflows/pages.yml.
 # Reference: https://github.com/CameronBrooks11/openscad-web/blob/v0/docs/PUBLISHING.md
 #
-# NOTE: openscad-web v0 assembles only the FIRST target. Multi-model support is
-# tracked upstream in CameronBrooks11/openscad-web#239.
+# The demo is published twice: a lightweight `static` surface (a pre-rendered
+# model, ~0.6 MB, the default the docs embed) and a `customizer` surface (the
+# live in-browser compiler) for the per-embed "Customize" upgrade. Needs
+# openscad-web >= 0.5 (static surface + multi-target). The static mount is
+# self-contained and light; only live surfaces carry the compiler runtime (and
+# share it when there are several).
 
 site:
   # Mount models into the Jekyll build output so they deploy with the site.
   outDir: docs/_site
 
 targets:
-  - source: ./models/demo.scad
-    surface: viewer # embed surface (in-browser viewer); customizer panel via controls
-    mountPath: /models/demo/ # served at <baseurl>/models/demo/
-    controls: true # show the parameter (customizer) panel
-    download: true # show the STL/GLB download button
+  # Lightweight default: pre-rendered geometry + poster, no in-browser compiler.
+  # The .off/.png are produced by the render step in pages.yml.
+  - surface: static
+    geometry: ./rendered/demo.off
+    poster: ./rendered/demo.png
+    mountPath: /models/demo/
     title: Parametric Demo
+
+  # Live upgrade: the in-browser customizer, compiled from the .scad on demand.
+  - source: ./models/demo.scad
+    surface: customizer
+    mountPath: /models/demo-live/
+    controls: true
+    download: true
+    title: Parametric Demo (interactive)

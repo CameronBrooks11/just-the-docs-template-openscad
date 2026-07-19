@@ -1,48 +1,56 @@
 {%- comment -%}
   openscad.html — embed a self-hosted OpenSCAD model in a docs page.
 
-  The model surface is assembled into the site by the openscad-web GitHub Action
-  (see .github/workflows/pages.yml + openscad-publish.yml) and served SAME-ORIGIN
-  at <baseurl>/models/<model>/. Nothing is loaded from an external host.
+  Poster-first and tiered. By default it shows a lightweight pre-rendered model:
+  a PNG poster you click to load a ~0.6 MB rotatable 3D view (no WASM compiler).
+  Optionally offer a per-embed "Customize" upgrade to the live in-browser
+  customizer with live="<mount>", or embed a live surface directly with
+  surface="customizer".
+
+  Every surface is assembled into THIS site by the openscad-web GitHub Action
+  (.github/workflows/pages.yml + openscad-publish.yml) and served SAME-ORIGIN at
+  <baseurl>/models/<mount>/ — nothing loads from an external host.
 
   Usage:
-    {% include openscad.html model="demo" %}
-    {% include openscad.html model="demo" height="600" title="Widget" %}
+    {% include openscad.html model="demo" %}                           {# static, poster-first #}
+    {% include openscad.html model="demo" live="demo-live" %}          {# + "Customize" upgrade #}
+    {% include openscad.html model="demo-live" surface="customizer" %} {# live directly #}
 
   Parameters:
-    model     (required) mount name — must match a target's mountPath in
-              openscad-publish.yml (e.g. mountPath: /models/demo/ -> model="demo")
-    height    iframe height in px (default: 480)
-    title     accessible title / label (default: the model name)
-    controls  "true"/"false" — override the published customizer-panel default
-    download  "true"/"false" — override the published download-button default
+    model    (required) mount name — a target's mountPath: /models/<model>/
+    surface  "static" (default) | "viewer" | "customizer" — how <model> was published
+    live     optional mount name of a live surface, for a "Customize" upgrade button
+    height   iframe / viewer height in px (default: 480)
+    title    accessible title / label (default: the model name)
 
-  Note: the surface only exists in the CI-assembled site. A plain local
-  `jekyll serve` will not have it unless you assemble it yourself; the embed
-  then shows its fallback link instead of the viewer.
+  The surfaces exist only in the CI-assembled site, so a plain local
+  `jekyll serve` shows the poster/link fallback instead of a live view.
 {%- endcomment -%}
 {%- assign osc_model = include.model -%}
 {%- if osc_model == nil or osc_model == "" -%}
 <p class="openscad-embed-error"><strong>openscad.html:</strong> missing required <code>model</code> parameter.</p>
 {%- else -%}
+{%- assign osc_surface = include.surface | default: "static" -%}
 {%- assign osc_height = include.height | default: 480 -%}
 {%- assign osc_title = include.title | default: osc_model -%}
-{%- assign osc_src = site.baseurl | append: "/models/" | append: osc_model | append: "/" -%}
-{%- assign osc_query = "" -%}
-{%- if include.controls -%}{%- assign osc_query = osc_query | append: "&controls=" | append: include.controls -%}{%- endif -%}
-{%- if include.download -%}{%- assign osc_query = osc_query | append: "&download=" | append: include.download -%}{%- endif -%}
-{%- if osc_query != "" -%}{%- assign osc_src = osc_src | append: osc_query | replace_first: "&", "?" -%}{%- endif -%}
-<div class="openscad-embed">
-  <iframe
-    src="{{ osc_src }}"
-    title="OpenSCAD model: {{ osc_title }}"
-    width="100%"
-    height="{{ osc_height }}"
-    loading="lazy"
-    allow="fullscreen"
-    referrerpolicy="no-referrer"
-  >
-    <a href="{{ osc_src }}">Open the {{ osc_title }} model</a>
-  </iframe>
+{%- assign osc_models = site.baseurl | append: "/models/" -%}
+{%- assign osc_src = osc_models | append: osc_model | append: "/" -%}
+{%- assign osc_poster = osc_src | append: "poster.png" -%}
+<div
+  class="openscad-embed"
+  data-openscad-embed
+  data-src="{{ osc_src }}"
+  data-height="{{ osc_height }}"
+  data-title="{{ osc_title }}"
+  {%- if include.live %} data-live-src="{{ osc_models | append: include.live | append: '/' }}"{% endif %}
+  style="--openscad-embed-height: {{ osc_height }}px;"
+>
+  <button type="button" class="openscad-embed__poster" aria-label="Load the interactive 3D view of {{ osc_title }}">
+    {%- if osc_surface == "static" %}
+    <img class="openscad-embed__poster-img" src="{{ osc_poster }}" alt="Rendered view of {{ osc_title }}" loading="lazy" />
+    {%- endif %}
+    <span class="openscad-embed__play">&#9654;&nbsp;View 3D</span>
+  </button>
+  <noscript><a href="{{ osc_src }}">Open the {{ osc_title }} model</a></noscript>
 </div>
 {%- endif -%}
