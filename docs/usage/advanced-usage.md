@@ -12,14 +12,14 @@ Dive into parameters, modules, and best practices:
 - **Library paths** (`use <...>`, `include <...>`)
 - **Combining multiple modules**
 
-```c
+```scad
 // mymodule.scad
 module foo(size=10) {
   cylinder(h=size, r=size/2);
 }
 ```
 
-```c
+```scad
 // main.scad
 use <mymodule.scad>;
 foo(size=20);

@@ -183,11 +183,10 @@ _or_
 
 You can do inline code blocks for things like `commands and code snippets` as you normally would.
 
-Or use syntax highlighted codeblocks, generally:
-"`c" or,
-"`js"
+Or use syntax highlighted codeblocks. This template registers an OpenSCAD
+lexer, so fence your OpenSCAD with `scad` (or `openscad`):
 
-```c
+```scad
 length = 10;
 width = 5;
 height = 4;
