@@ -1,0 +1,18 @@
+# Declares which OpenSCAD model(s) are published into the docs site and how.
+# Consumed by the openscad-web GitHub Action in .github/workflows/pages.yml.
+# Reference: https://github.com/CameronBrooks11/openscad-web/blob/v0/docs/PUBLISHING.md
+#
+# NOTE: openscad-web v0 assembles only the FIRST target. Multi-model support is
+# tracked upstream in CameronBrooks11/openscad-web#239.
+
+site:
+  # Mount models into the Jekyll build output so they deploy with the site.
+  outDir: docs/_site
+
+targets:
+  - source: ./models/demo.scad
+    surface: viewer # embed surface (in-browser viewer); customizer panel via controls
+    mountPath: /models/demo/ # served at <baseurl>/models/demo/
+    controls: true # show the parameter (customizer) panel
+    download: true # show the STL/GLB download button
+    title: Parametric Demo
