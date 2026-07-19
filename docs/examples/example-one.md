@@ -8,6 +8,6 @@ nav_order: 1
 
 A minimal “Hello World” example:
 
-```c
+```scad
 cube([5,5,5]);
 ```

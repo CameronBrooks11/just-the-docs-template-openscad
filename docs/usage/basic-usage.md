@@ -8,7 +8,7 @@ nav_order: 1
 
 A minimal “first script” example:
 
-```c
+```scad
 // main.scad
 cube([10,10,10]);
 ```
