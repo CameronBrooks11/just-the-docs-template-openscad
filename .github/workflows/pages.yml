@@ -52,6 +52,14 @@ jobs:
         env:
           JEKYLL_ENV: production
 
+      - name: Assemble OpenSCAD model surfaces
+        # Publishes the models declared in openscad-publish.yml into the built
+        # Jekyll site (docs/_site), served same-origin. Remove this step (and
+        # openscad-publish.yml) if the site embeds no models.
+        uses: CameronBrooks11/openscad-web@v0
+        with:
+          config: ./openscad-publish.yml
+
       - name: Upload artifact
         # Automatically uploads the generated docs/_site folder
         uses: actions/upload-pages-artifact@v3
