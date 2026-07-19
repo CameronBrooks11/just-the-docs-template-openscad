@@ -1,0 +1,72 @@
+// Styling for the OpenSCAD model embed ({% include openscad.html %}).
+// Just-the-Docs imports _sass/custom/custom.scss automatically.
+
+.openscad-embed {
+  position: relative;
+  width: 100%;
+  margin: 1rem 0;
+  border: 1px solid $border-color;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1e1e1e;
+}
+
+.openscad-embed__frame {
+  display: block;
+  width: 100%;
+  height: var(--openscad-embed-height, 480px);
+  border: 0;
+}
+
+.openscad-embed__poster {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: var(--openscad-embed-height, 480px);
+  padding: 0;
+  border: 0;
+  background: #1e1e1e;
+  cursor: pointer;
+}
+
+.openscad-embed__poster-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.openscad-embed__play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #f9d72c; // OpenSCAD yellow
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.openscad-embed__bar {
+  padding: 0.4rem 0.6rem;
+  background: #151515;
+  text-align: right;
+}
+
+.openscad-embed__upgrade {
+  border: 0;
+  border-radius: 4px;
+  padding: 0.3rem 0.7rem;
+  background: #f9d72c;
+  color: #1b2f01;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.openscad-embed-error {
+  padding: 0.75rem 1rem;
+  border-left: 4px solid #d73a4a;
+  background: rgba(215, 58, 70, 0.08);
+}

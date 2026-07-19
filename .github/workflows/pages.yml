@@ -52,6 +52,20 @@ jobs:
         env:
           JEKYLL_ENV: production
 
+      - name: Render static model geometry
+        # Pre-render the models used by `static` surfaces to OFF (+ a PNG poster)
+        # with the OpenSCAD CLI. deploy-configure (the Action) stays dependency-
+        # free, so the render happens here. Drop this step if you publish no
+        # static surfaces.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openscad
+          mkdir -p rendered
+          # Input file first: `--render` takes an optional value and would
+          # otherwise swallow a trailing filename.
+          openscad models/demo.scad -o rendered/demo.off
+          openscad models/demo.scad -o rendered/demo.png --imgsize=1000,750 --viewall --autocenter --render
+
       - name: Assemble OpenSCAD model surfaces
         # Publishes the models declared in openscad-publish.yml into the built
         # Jekyll site (docs/_site), served same-origin. Remove this step (and
