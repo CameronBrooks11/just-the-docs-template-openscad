@@ -1,7 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: bundler
-    directory: /
+    directory: /docs # the Jekyll Gemfile lives in docs/, not the repo root
     schedule:
       interval: daily
     allow:
