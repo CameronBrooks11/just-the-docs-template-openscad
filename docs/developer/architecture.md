@@ -6,13 +6,15 @@ nav_order: 1
 
 # Architecture
 
-Explain your repo layout:
+Lay out your repo so readers can find things. A typical OpenSCAD project using
+this template:
 
-```shell
-├─ src/ ← SCAD library source
-├─ examples/ ← user-facing examples
-├─ docs/ ← this documentation
-└─ tests/ ← testing scripts if you have them
+```text
+├─ models/               ← .scad sources (embedded in the docs)
+├─ examples/             ← runnable example scripts
+├─ docs/                 ← this documentation site
+├─ openscad-publish.yml  ← which models to embed, and how
+└─ .github/              ← the GitHub Pages build workflow
 ```
 
-And the data-flow of the library source...etc.
+Then describe how your library's modules fit together.
