@@ -59,12 +59,14 @@ jobs:
         # static surfaces.
         run: |
           sudo apt-get update
-          sudo apt-get install -y openscad
+          sudo apt-get install -y openscad xvfb
           mkdir -p rendered
           # Input file first: `--render` takes an optional value and would
           # otherwise swallow a trailing filename.
+          # OFF is a headless CGAL export; the PNG poster needs an OpenGL context,
+          # so render it under xvfb (a virtual display) on the headless runner.
           openscad models/demo.scad -o rendered/demo.off
-          openscad models/demo.scad -o rendered/demo.png --imgsize=1000,750 --viewall --autocenter --render
+          xvfb-run -a openscad models/demo.scad -o rendered/demo.png --imgsize=1000,750 --viewall --autocenter --render
 
       - name: Assemble OpenSCAD model surfaces
         # Publishes the models declared in openscad-publish.yml into the built
