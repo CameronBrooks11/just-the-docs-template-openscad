@@ -78,7 +78,7 @@ jobs:
 
       - name: Upload artifact
         # Automatically uploads the generated docs/_site folder
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: docs/_site
 
