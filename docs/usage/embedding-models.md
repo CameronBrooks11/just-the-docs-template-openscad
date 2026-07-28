@@ -39,14 +39,42 @@ customizer that compiles the model in the browser.
    ```bash
    openscad models/widget.scad -o rendered/widget.off
    xvfb-run -a openscad models/widget.scad -o rendered/widget.png \
-     --imgsize=1000,750 --viewall --autocenter --render
+     --imgsize=1000,750 --viewall --autocenter
    ```
+
+   The poster deliberately uses preview mode (no `--render`) — a full CGAL
+   render discards the model's `color()` information.
 
 4. Embed it in any page:
 
    {% raw %}```liquid
    {% include openscad.html model="widget" live="widget-live" title="Widget" %}
    ```{% endraw %}
+
+## Multi-file models
+
+A model that spans several files — `use <…>` / `include <…>` of siblings, or a
+library — publishes with `projectRoot` + `entry` instead of `source`:
+
+```yaml
+targets:
+  - surface: customizer
+    projectRoot: ./models/assembly # everything under here becomes public
+    entry: ./main.scad # entry file inside projectRoot
+    mountPath: /models/assembly-live/
+```
+
+The whole tree is published and hydrated into the in-browser compiler, so
+relative references between project files resolve exactly as they do locally.
+Two rules:
+
+- **Dependencies must live inside `projectRoot`.** An external library goes in
+  via a staging step in `pages.yml` — copy the library beside the entry (e.g.
+  `lib/`) so `include <lib/…>` resolves relative to the including file. See
+  [iLOX's workflow](https://github.com/CameronBrooks11/iLOX/blob/main/.github/workflows/pages.yml)
+  for a worked example (its examples depend on the tessella library).
+- **File names must be portable** — a name containing `:` or `\` fails the
+  publish. Spaces, `#`, and `%` are fine.
 
 ## Include parameters
 
@@ -60,4 +88,5 @@ customizer that compiles the model in the browser.
 
 The models are assembled at deploy time by the
 [openscad-web](https://github.com/CameronBrooks11/openscad-web) GitHub Action
-(pinned `@v0`), which needs **v0.5+** for the `static` surface.
+(pinned `@v0`), which needs **v0.5+** for the `static` surface and **v0.6+**
+for multi-file (`projectRoot`) live surfaces.
