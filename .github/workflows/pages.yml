@@ -27,7 +27,7 @@ concurrency:
 jobs:
   # Build job
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -64,9 +64,11 @@ jobs:
           # OFF is a headless CGAL export; the PNG poster needs an OpenGL context,
           # so render it under xvfb (a virtual display) on the headless runner.
           # The poster deliberately uses preview mode (no --render): a full CGAL
-          # render discards the model's color() information.
+          # render discards the model's color() information. A dark colorscheme
+          # matches the dark embed and viewer it sits in.
           openscad models/demo.scad -o rendered/demo.off
-          xvfb-run -a openscad models/demo.scad -o rendered/demo.png --imgsize=1000,750 --viewall --autocenter
+          xvfb-run -a openscad models/demo.scad -o rendered/demo.png --imgsize=1000,750 --viewall --autocenter \
+            --colorscheme="Tomorrow Night"
 
       - name: Assemble OpenSCAD model surfaces
         # Publishes the models declared in openscad-publish.yml into the built
@@ -87,7 +89,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build
     steps:
       - name: Deploy to GitHub Pages
