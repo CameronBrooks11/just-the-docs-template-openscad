@@ -1,0 +1,4 @@
+title: just-the-docs-template-openscad
+description: A documentation site for an OpenSCAD repo, built by a GitHub Action.
+pages: docs
+models: models/demo.scad

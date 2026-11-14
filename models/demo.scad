@@ -1,8 +1,8 @@
 // Parametric demo model for the OpenSCAD docs template.
 //
-// This file is published into the docs site by the openscad-web GitHub Action
-// (see .github/workflows/pages.yml + openscad-publish.yml) and embedded in a
-// documentation page with {% include openscad.html model="demo" %}.
+// docs-site.yml names this file in models:, so the engine puts it on this
+// site's Model page as a 3D view with a live customizer. A page could embed it
+// with {% include openscad.html model="model-models-demo" %}.
 //
 // The annotations below (group headers and value ranges) drive the in-browser
 // customizer panel.
