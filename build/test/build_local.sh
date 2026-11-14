@@ -10,7 +10,7 @@ build=$(dirname "$here")
 mkdir -p "$out"
 out=$(cd "$out" && pwd)
 
-python3 "$build/assemble.py" --repo "$here/fixtures/lite" --theme "$build/../docs" \
+python3 "$build/assemble.py" --repo "$here/fixtures/lite" --theme "$build/../theme" \
   --out "$out/src" --render "$out/render" --site-dir "$out/site" \
   --repository CameronBrooks11/engine-fixture
 export BUNDLE_FROZEN=true BUNDLE_PATH="$out/bundle"

@@ -4,7 +4,7 @@ A documentation site for an OpenSCAD repo, built by a GitHub Action: [Just the D
 
 ## Use it
 
-`build/` is the Action. It builds the site from the repo as it is, without copying anything into it: the repo keeps one workflow file, and the theme (in `docs/` here), the build and the model embeds stay in this repo and update by version. Copying `docs/` and `.github/` into a project, as earlier versions of this README said, is no longer the way to use it.
+`build/` is the Action. It builds the site from the repo as it is, without copying anything into it: the repo keeps one workflow file, and the theme (in `theme/` here), the build and the model embeds stay in this repo and update by version. Copying `docs/` and `.github/` into a project, as earlier versions of this README said, is no longer the way to use it.
 
 What it publishes:
 

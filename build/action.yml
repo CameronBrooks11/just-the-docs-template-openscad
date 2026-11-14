@@ -40,7 +40,7 @@ runs:
       run: |
         site=$(realpath -m "${{ inputs.output-dir }}")
         echo "site=$site" >> "$GITHUB_OUTPUT"
-        echo "theme=$(realpath "$GITHUB_ACTION_PATH/../docs")" >> "$GITHUB_OUTPUT"
+        echo "theme=$(realpath "$GITHUB_ACTION_PATH/../theme")" >> "$GITHUB_OUTPUT"
         echo "src=$RUNNER_TEMP/docs-engine/src" >> "$GITHUB_OUTPUT"
         echo "render=$RUNNER_TEMP/docs-engine/render" >> "$GITHUB_OUTPUT"
         if [ -n "${{ inputs.base-path }}" ]; then base="${{ inputs.base-path }}"
