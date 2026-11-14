@@ -1,0 +1,99 @@
+name: "OpenSCAD docs site"
+description: "Build a Just the Docs site from an OpenSCAD repo: its README as the home page and examples/*.scad as 3D views"
+
+inputs:
+  source-dir:
+    description: "The repo to document: README.md, optional examples/*.scad and docs-site.yml"
+    required: false
+    default: "."
+  output-dir:
+    description: "Where the finished site is written, ready for actions/upload-pages-artifact"
+    required: false
+    default: "_site"
+  base-path:
+    description: 'URL path the site is served under. Defaults to "/<repo>", or "" for a <owner>.github.io repo'
+    required: false
+    default: ""
+  repository:
+    description: "OWNER/NAME the site links to and is named after"
+    required: false
+    default: ${{ github.repository }}
+  live:
+    description: "Offer a live in-browser customizer behind each 3D example"
+    required: false
+    default: "true"
+
+outputs:
+  site-dir:
+    description: "Absolute path to the finished site"
+    value: ${{ steps.paths.outputs.site }}
+  summary:
+    description: "Path to summary.json: the base path, published images and examples"
+    value: ${{ steps.paths.outputs.render }}/summary.json
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve paths
+      id: paths
+      shell: bash
+      run: |
+        site=$(realpath -m "${{ inputs.output-dir }}")
+        echo "site=$site" >> "$GITHUB_OUTPUT"
+        echo "theme=$(realpath "$GITHUB_ACTION_PATH/../docs")" >> "$GITHUB_OUTPUT"
+        echo "src=$RUNNER_TEMP/docs-engine/src" >> "$GITHUB_OUTPUT"
+        echo "render=$RUNNER_TEMP/docs-engine/render" >> "$GITHUB_OUTPUT"
+        if [ -n "${{ inputs.base-path }}" ]; then base="${{ inputs.base-path }}"
+        else
+          repo="${{ inputs.repository }}"
+          if [[ "${repo#*/}" == *.github.io ]]; then base=""; else base="/${repo#*/}"; fi
+        fi
+        echo "base=$base" >> "$GITHUB_OUTPUT"
+        if compgen -G "${{ inputs.source-dir }}/examples/*.scad" > /dev/null; then echo "examples=true" >> "$GITHUB_OUTPUT"; fi
+
+    - name: Install OpenSCAD
+      if: steps.paths.outputs.examples == 'true'
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq openscad xvfb
+
+    - name: Assemble the site source
+      id: assemble
+      shell: bash
+      run: |
+        python3 "$GITHUB_ACTION_PATH/assemble.py" \
+          --repo "${{ inputs.source-dir }}" --theme "${{ steps.paths.outputs.theme }}" \
+          --out "${{ steps.paths.outputs.src }}" --render "${{ steps.paths.outputs.render }}" \
+          --site-dir "${{ steps.paths.outputs.site }}" --base-path "${{ steps.paths.outputs.base }}" \
+          --live "${{ inputs.live }}" --repository "${{ inputs.repository }}"
+        # hashFiles() cannot see $RUNNER_TEMP, so say here whether there is anything to publish.
+        if [ -f "${{ steps.paths.outputs.render }}/openscad-publish.yml" ]; then echo "publish=true" >> "$GITHUB_OUTPUT"; fi
+
+    - name: Set up Ruby and the theme's locked gems
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: "3.3"
+        bundler-cache: true
+        working-directory: ${{ steps.paths.outputs.src }}
+
+    - name: Build with Jekyll
+      shell: bash
+      working-directory: ${{ steps.paths.outputs.src }}
+      env:
+        JEKYLL_ENV: production
+        JEKYLL_GITHUB_TOKEN: ${{ github.token }}
+      run: bundle exec jekyll build --destination "${{ steps.paths.outputs.site }}" --baseurl "${{ steps.paths.outputs.base }}"
+
+    - name: Publish the 3D examples
+      if: steps.assemble.outputs.publish == 'true'
+      uses: CameronBrooks11/openscad-web@v0
+      with:
+        config: ${{ steps.paths.outputs.render }}/openscad-publish.yml
+        # Nested in this composite action, openscad-web cannot read its own ref
+        # (github.action_ref is empty), so name the artifact version to match @v0.
+        version: v0
+
+    - name: Check the site
+      shell: bash
+      run: python3 "$GITHUB_ACTION_PATH/check_site.py" "${{ steps.paths.outputs.site }}" "${{ steps.paths.outputs.render }}/summary.json"
