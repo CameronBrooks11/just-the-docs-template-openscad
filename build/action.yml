@@ -62,6 +62,11 @@ runs:
         OPENSCAD_SNAPSHOT: "2026.10.15"
         OPENSCAD_SHA256: "9d26e390d3a5c94f2e304d94d7b2eff77fb11fcd25829f2814de147ba92ac363"
       run: |
+        # The AppImage takes its GL, EGL and window-system libraries from the host
+        # (ldd on the extracted binary); Mesa's EGL draws the pictures offscreen.
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq libegl1 libegl-mesa0 libgl1 libopengl0 libglx0 libgbm1 \
+          libwayland-client0 libx11-xcb1 xvfb
         dir="$RUNNER_TEMP/openscad"
         file="OpenSCAD-$OPENSCAD_SNAPSHOT-x86_64.AppImage"
         mkdir -p "$dir/bin"
@@ -73,8 +78,6 @@ runs:
         chmod +x "$dir/bin/openscad"
         echo "$dir/bin" >> "$GITHUB_PATH"
         "$dir/bin/openscad" --version
-        sudo apt-get update -qq
-        sudo apt-get install -y -qq xvfb
 
     - name: Assemble the site source
       id: assemble
