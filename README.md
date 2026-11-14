@@ -11,7 +11,8 @@ What it publishes:
 - `README.md` becomes the home page. Images it shows are published beside it; links to an example go to that example; links to any other file go to the file on GitHub.
 - Each `examples/*.scad` is rendered with OpenSCAD onto an Examples page: a 3D view that loads when clicked, with a live customizer behind it, or a picture if the example is 2D. Its leading `//` comment gives its title and description: the title is the first sentence, however many lines it wraps over, or a first line with no closing punctuation followed by a capitalised description line.
 - For a repo whose main file is the model, `models:` in `docs-site.yml` names it, or several, comma-separated (`models: src/house.scad`). Each goes on a Model page before the examples, titled by its path, with the same 3D view and customizer, and README links to it go there. The customizer shows the file's own parameters, so they need OpenSCAD's Customizer comments to read well.
-- An optional `docs-site.yml` sets `title`, `description`, `color_scheme` (`openscad-light` or `openscad-dark`), `live` (`false` to leave out the customizer) and `models`.
+- Libraries from outside the repo go in `docs-site.yml` as `libraries:`, comma-separated `name=owner/repo@ref` entries naming a public GitHub repo at a tag or commit (`libraries: BOSL2=BelfrySCAD/BOSL2@v2.0.716`). The engine clones each at that ref, renders with it on OpenSCAD's library path, and copies it beside each published file so the live customizer finds `include <BOSL2/std.scad>` the same way. The ref is pinned: a library update reaches the site only when the repo changes it.
+- An optional `docs-site.yml` sets `title`, `description`, `color_scheme` (`openscad-light` or `openscad-dark`), `live` (`false` to leave out the customizer), `models` and `libraries`.
 
 Every build checks its own links, anchors and model mounts, and fails rather than publishing a broken page.
 
