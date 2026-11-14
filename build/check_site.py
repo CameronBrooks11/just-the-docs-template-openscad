@@ -7,6 +7,7 @@ Fails (exit 1, one line per problem) when:
   - a local href or src in any page does not resolve to a file in the site
   - a link's #fragment names no id in the page it points to
   - a link still points at a .md file
+  - an embed's data-src or data-live-src names a mount not in the summary's targets
   - a model or example published in 3D has no model mount (an index.html under
     models/<name>/), or its static mount has no poster.png for the embed
 --no-models skips the mounts, and links into models/, for a build that has not
@@ -39,6 +40,12 @@ def main(argv):
             continue
         pages += 1
         html = page.read_text(errors="replace")
+        # An embed names a mount by data-src (and data-live-src); it has to be one the
+        # engine published, which an inline embed in a hand-written page may get wrong.
+        for attr, mount in re.findall(r'\b(data-src|data-live-src)="([^"]*)"', html):
+            name = mount[len(base):].strip("/") if mount.startswith(base + "/") else mount.strip("/")
+            if name not in summary["targets"]:
+                problems.append(f"{rel_page}: {attr}={mount} names no model the engine published")
         for attr, link in re.findall(r'\b(href|src)="([^"]*)"', html):
             u = urlparse(link)
             if link.startswith("#") and len(link) > 1:

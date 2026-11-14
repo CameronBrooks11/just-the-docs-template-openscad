@@ -10,7 +10,9 @@ docs-site.yml's `models:` key (comma-separated paths) go the same way onto a
 Model page before it, for a repo whose main file is the model. Its `libraries:`
 key (name=owner/repo@ref, comma-separated) names outside libraries: each is
 cloned at its ref, put on OPENSCADPATH for the renders, and copied beside each
-published file for the live customizer. The theme (Gemfile,
+published file for the live customizer. Its `pages:` key names a folder of the
+repo's own Markdown pages, published beside the generated ones, its index.md
+taking the README's place as the home page. The theme (Gemfile,
 styles, includes, plugins, scripts and base _config.yml) comes from --theme,
 the template's own docs/ folder. Writes:
 
@@ -64,6 +66,8 @@ def write_config(theme_cfg, out, cfg, repository, base_path):
         "repository": yaml_str(repository),
         "color_scheme": cfg.get("color_scheme", "openscad-light"),
     }
+    if cfg.get("math", "").lower() == "true":
+        values["math"] = "true"
     for key, value in values.items():
         text, n = re.subn(rf"(?m)^{key}:.*$", f"{key}: {value}", text)
         if n == 0:
@@ -76,51 +80,74 @@ def write_config(theme_cfg, out, cfg, repository, base_path):
 
 
 class Linker:
-    """Rewrite the README's relative links for the site."""
+    """Rewrite a Markdown file's relative links for the site.
 
-    def __init__(self, repo, out, repository, models=()):
+    A link is resolved against the source file's folder in the repo, and written
+    relative to the built page's folder on the site. Pages in the pages folder are
+    published at their path inside it, as .html; the README is the home page."""
+
+    def __init__(self, repo, out, repository, models=(), examples=None, pages_dir=None, pages=()):
         self.repo, self.out, self.repository = repo, out, repository
         self.models = {m: model_mount(m) for m in models}
+        self.examples = examples or {}
+        self.pages_dir, self.pages = pages_dir, set(pages)
         self.copied = []
 
-    def target(self, link):
+    def built(self, rel):
+        """Where a repo file is on the site, or None if it isn't published."""
+        if self.pages_dir and rel.startswith(self.pages_dir + "/") and rel in self.pages:
+            return rel[len(self.pages_dir) + 1:][:-len(".md")] + ".html"
+        return None
+
+    def target(self, link, base="", page_dir=""):
         if not link or re.match(r"^[a-z][a-z0-9+.-]*:|^#|^/|^\{\{", link, re.I):
             return link
         path, _, anchor = link.partition("#")
         anchor = "#" + anchor if anchor else ""
-        rel = os.path.normpath(path)
+        rel = os.path.normpath(os.path.join(base, path))
         if rel.startswith(".."):
             return link
+
+        def here(site_path):
+            return os.path.relpath(site_path, page_dir or ".") if page_dir else site_path
+
         src = self.repo / rel
         if rel in ("README.md", "."):
-            return "index.html" + anchor
+            return here("index.html") + anchor
+        page = self.built(rel)
+        if page:
+            return here(page) + anchor
+        if self.pages_dir and rel.startswith(self.pages_dir + "/"):
+            # Anything else inside the pages folder is copied as it is, so it keeps its path.
+            if src.is_file() and src.suffix != ".md":
+                return here(rel[len(self.pages_dir) + 1:]) + anchor
         if src.is_file() and src.suffix.lower() in IMAGE_EXT:
             dest = self.out / rel
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dest)
             if rel not in self.copied:
                 self.copied.append(rel)
-            return rel + anchor
+            return here(rel) + anchor
         if rel in self.models:
-            return "model.html#" + self.models[rel]
-        if rel.startswith("examples/") and src.suffix == ".scad":
-            return "examples.html#" + slug(src.stem)
+            return here("model.html") + "#" + self.models[rel]
+        if rel in self.examples:
+            return here("examples.html") + "#" + self.examples[rel]
         kind = "tree" if src.is_dir() else "blob"
         return f"https://github.com/{self.repository}/{kind}/HEAD/{rel}{anchor}"
 
-    def rewrite(self, md):
+    def rewrite(self, md, base="", page_dir=""):
         """Rewrite links outside fenced code blocks, where they are literal text."""
         parts = re.split(r"(?ms)(^[ \t]*(?:```|~~~).*?^[ \t]*(?:```|~~~)[ \t]*$)", md)
-        return "".join(p if i % 2 else self.rewrite_text(p) for i, p in enumerate(parts))
+        return "".join(p if i % 2 else self.rewrite_text(p, base, page_dir) for i, p in enumerate(parts))
 
-    def rewrite_text(self, md):
+    def rewrite_text(self, md, base="", page_dir=""):
+        t = lambda link: self.target(link, base, page_dir)
         # Markdown links and images: [text](target "title") and ![alt](target)
-        md = re.sub(r"(\]\()([^)\s]+)((?:\s+\"[^\"]*\")?\))",
-                    lambda m: m.group(1) + self.target(m.group(2)) + m.group(3), md)
+        md = re.sub(r"(\]\()([^)\s]+)((?:\s+\"[^\"]*\")?\))", lambda m: m.group(1) + t(m.group(2)) + m.group(3), md)
         # Reference definitions: [label]: target
-        md = re.sub(r"(?m)^(\s*\[[^\]]+\]:\s*)(\S+)", lambda m: m.group(1) + self.target(m.group(2)), md)
+        md = re.sub(r"(?m)^(\s*\[[^\]]+\]:\s*)(\S+)", lambda m: m.group(1) + t(m.group(2)), md)
         # HTML attributes
-        md = re.sub(r"((?:src|href)=\")([^\"]+)(\")", lambda m: m.group(1) + self.target(m.group(2)) + m.group(3), md)
+        md = re.sub(r"((?:src|href)=\")([^\"]+)(\")", lambda m: m.group(1) + t(m.group(2)) + m.group(3), md)
         return md
 
 
@@ -144,6 +171,81 @@ def read_models(repo, cfg):
             sys.exit(f"docs-site.yml models: {m} is not a .scad file in the repo")
         models.append(Path(rel).as_posix())
     return models
+
+
+def find_examples(repo):
+    """examples/*.scad; or, when there are none at the top, examples/<folder>/**.scad,
+    grouped by folder. A repo with both keeps only the top level, so folders of data
+    files that examples include (pixelArtSCAD's examples/art) stay out."""
+    d = repo / "examples"
+    if not d.is_dir():
+        return []
+    top = sorted(d.glob("*.scad"))
+    if top:
+        return top
+    return sorted(p for p in d.rglob("*.scad") if not any(s.startswith((".", "_")) for s in p.relative_to(d).parts))
+
+
+def example_slug(repo, ex):
+    """An example's mount and anchor, from its path inside examples/."""
+    return slug(ex.relative_to(repo / "examples").with_suffix("").as_posix())
+
+
+PAGE_SKIP_DIRS = SKIP_DIRS | {".jekyll-cache", ".bundle"}
+
+
+def read_pages(repo, cfg):
+    """The pages: folder and its Markdown pages (repo-relative), or (None, [])."""
+    d = cfg.get("pages", "").strip().strip("/")
+    if not d:
+        return None, []
+    rel = os.path.normpath(d)
+    if rel.startswith("..") or os.path.isabs(rel) or not (repo / rel).is_dir():
+        sys.exit(f"docs-site.yml pages: {d} is not a folder in the repo")
+    pages = []
+    for root, dirs, files in os.walk(repo / rel):
+        dirs[:] = sorted(x for x in dirs if x not in PAGE_SKIP_DIRS and not x.startswith(("_", ".")))
+        for f in sorted(files):
+            # A README in the pages folder describes the folder on GitHub; it isn't a page.
+            if f.endswith(".md") and f != "README.md":
+                pages.append((Path(root) / f).relative_to(repo).as_posix())
+    return Path(rel).as_posix(), pages
+
+
+def publish_pages(repo, out, pages_dir, pages, linker):
+    """Copy the pages folder into the site: each page with its links rewritten, and the
+    files beside them (images and the like) as they are. Folders starting with _ or . are
+    skipped, and a file the engine already wrote (its _config.yml, Gemfile, scripts) is
+    never replaced, so an old copy of the theme left in the folder has no effect."""
+    src = repo / pages_dir
+    for root, dirs, files in os.walk(src):
+        dirs[:] = [x for x in dirs if x not in PAGE_SKIP_DIRS and not x.startswith(("_", "."))]
+        for f in files:
+            p = Path(root) / f
+            inner = p.relative_to(src).as_posix()
+            rel = p.relative_to(repo).as_posix()
+            dest = out / inner
+            if rel in pages:
+                text = p.read_text()
+                m = re.match(r"(?s)(---\n.*?\n---\n)(.*)", text)
+                front, body = (m.group(1), m.group(2)) if m else ("", text)
+                body = linker.rewrite(body, base=os.path.dirname(rel), page_dir=os.path.dirname(inner))
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_text(front + body)
+            elif p.suffix != ".md" and not dest.exists():
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(p, dest)
+
+
+# Loaded on pages whose front matter sets math: true, or on every page when docs-site.yml
+# does. Inline math is $…$, as on GitHub; MathJax doesn't read single dollars unless told to.
+MATHJAX = """{%- if page.math or site.math %}
+<script>
+  window.MathJax = { tex: { inlineMath: [["$", "$"], ["\\\\(", "\\\\)"]] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+{%- endif %}
+"""
 
 
 LIBRARY = re.compile(r"^([A-Za-z0-9_.-]+)=([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)@([A-Za-z0-9_./-]+)$")
@@ -312,22 +414,32 @@ def main():
             shutil.copy2(src, out / part)
     write_config(a.theme / "_config.yml", out, cfg, a.repository, base_path)
 
-    linker = Linker(repo, out, a.repository, models)
-    readme = linker.rewrite((repo / "README.md").read_text())
-    # raw: a README is plain Markdown, and Liquid must not read its braces.
-    (out / "index.md").write_text("---\ntitle: Home\nlayout: default\nnav_order: 1\npermalink: /\n---\n\n"
-                                  "{% raw %}\n" + readme.rstrip() + "\n{% endraw %}\n")
+    examples = find_examples(repo)
+    ex_slugs = {ex.relative_to(repo).as_posix(): example_slug(repo, ex) for ex in examples}
+    pages_dir, pages = read_pages(repo, cfg)
+    linker = Linker(repo, out, a.repository, models, ex_slugs, pages_dir, pages)
+    home_page = f"{pages_dir}/index.md" in pages if pages_dir else False
+    if not home_page:
+        readme = linker.rewrite((repo / "README.md").read_text())
+        # raw: a README is plain Markdown, and Liquid must not read its braces.
+        (out / "index.md").write_text("---\ntitle: Home\nlayout: default\nnav_order: 1\npermalink: /\n---\n\n"
+                                      "{% raw %}\n" + readme.rstrip() + "\n{% endraw %}\n")
+    if pages_dir:
+        publish_pages(repo, out, pages_dir, pages, linker)
+    if not (out / "_includes" / "head_custom.html").exists():
+        (out / "_includes").mkdir(exist_ok=True)
+        (out / "_includes" / "head_custom.html").write_text(MATHJAX)
 
-    examples = sorted((repo / "examples").glob("*.scad")) if (repo / "examples").is_dir() else []
-    summary = {"base_path": base_path, "images": linker.copied, "models": [], "examples": [], "targets": []}
+    summary = {"base_path": base_path, "images": linker.copied, "models": [], "examples": [], "targets": [],
+               "pages": [linker.built(p) for p in pages]}
     targets = []
 
-    def section(src, title, body, mount, heading=None):
+    def section(src, title, body, mount, heading=None, level=2):
         """Render one file, add its mounts, and return its page section."""
         rel = src.relative_to(repo).as_posix()
         live_mount = mount + "-live"
         is3d = render(repo, src, render_dir, mount)
-        sec = [f"## {heading or title} {{#{mount}}}", "", body, ""]
+        sec = [f"{'#' * level} {heading or title} {{#{mount}}}", "", body, ""]
         if is3d:
             targets.append(f"  - surface: static\n    geometry: ./{mount}.off\n    poster: ./{mount}.png\n"
                            f"    mountPath: /models/{mount}/\n    title: {yaml_str(title)}\n")
@@ -355,7 +467,8 @@ def main():
             entries = models + [ex.relative_to(repo).as_posix() for ex in examples]
             stage_libraries(libs_dir, libs, render_dir / "project", entries)
     summary["libraries"] = [name for name, _, _ in libs]
-    nav = 2
+    # A repo's own pages come first in the navigation, then the Model and Examples pages.
+    nav = 1000 if pages_dir else 2
     if models:
         sections = []
         for m in models:
@@ -369,12 +482,19 @@ def main():
         nav += 1
     if examples:
         sections = []
+        grouped = any(ex.parent != repo / "examples" for ex in examples)
+        group = None
         for ex in examples:
+            if grouped and ex.parent != group:
+                group = ex.parent
+                sections.append(f"## {group.relative_to(repo / 'examples').as_posix()}\n")
             comment = leading_comment(ex.read_text())
             title, body = title_and_body(comment) if comment else (ex.stem.replace("_", " "), "")
-            text, is3d = section(ex, title, body, slug(ex.stem))
+            mount = ex_slugs[ex.relative_to(repo).as_posix()]
+            text, is3d = section(ex, title, body, mount, level=3 if grouped else 2)
             sections.append(text)
-            summary["examples"].append({"name": ex.stem, "slug": slug(ex.stem), "is3d": is3d})
+            summary["examples"].append({"name": ex.relative_to(repo / "examples").with_suffix("").as_posix(),
+                                        "slug": mount, "is3d": is3d})
         header = f"---\ntitle: Examples\nlayout: default\nnav_order: {nav}\n---\n\n# Examples\n\n"
         (out / "examples.md").write_text(header + "\n".join(sections))
     if targets:
