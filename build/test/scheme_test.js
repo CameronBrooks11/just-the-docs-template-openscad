@@ -6,7 +6,10 @@ const path = require("path");
 const vm = require("vm");
 
 const html = fs.readFileSync(path.join(__dirname, "../../theme/_includes/head_custom.html"), "utf8");
-const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+// The first script block in the file, which is ours: no HTML parsing needed.
+const open = html.indexOf("<script>") + "<script>".length;
+const script = html.slice(open, html.indexOf("</script>", open));
+if (!script.includes("openscadDocsToggleScheme")) throw new Error("the scheme script wasn't found");
 
 function run({ fixed, systemDark, stored, storageThrows }) {
   const source = script
