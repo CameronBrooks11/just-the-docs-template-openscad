@@ -132,6 +132,9 @@ class Linker:
             return here("model.html") + "#" + self.models[rel]
         if rel in self.examples:
             return here("examples.html") + "#" + self.examples[rel]
+        if rel == "examples" and self.examples:
+            # The folder on GitHub; on the site, the page that shows it.
+            return here("examples.html") + anchor
         kind = "tree" if src.is_dir() else "blob"
         return f"https://github.com/{self.repository}/{kind}/HEAD/{rel}{anchor}"
 

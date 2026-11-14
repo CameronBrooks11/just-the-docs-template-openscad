@@ -7,7 +7,8 @@ has_children: true
 # Guide
 
 Back to [the home page](../index.md), on to [the shapes](shapes.md), or see
-[the cube example](../../examples/shapes/cube.scad).
+[the cube example](../../examples/shapes/cube.scad), or browse
+[all the examples](../../examples/).
 
 The area of a circle is $\pi r^2$.
 

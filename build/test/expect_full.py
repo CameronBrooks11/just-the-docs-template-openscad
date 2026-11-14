@@ -39,6 +39,7 @@ def main(argv):
          and 'href="shapes.html"' in guide and 'href="index.html#guide"' in shapes),
         ("a link to the README goes to the home page", 'href="index.html"' in index),
         ("a link to a nested example goes to its section", 'href="../examples.html#shapes-cube"' in guide),
+        ("a link to the examples folder goes to the Examples page", 'href="../examples.html"' in guide),
         ("an image beside the pages keeps its path", 'src="img/block.png"' in index
          and (site / "img/block.png").is_file()),
         ("math: true loads MathJax", "mathjax@3.2.2" in guide),
