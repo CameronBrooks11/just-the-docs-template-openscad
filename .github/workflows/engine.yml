@@ -38,3 +38,20 @@ jobs:
           name: engine-lite-site
           path: _site-lite
           retention-days: 7
+
+  model-only:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Build the model-only fixture with the engine
+        id: engine
+        uses: ./build
+        with:
+          source-dir: build/test/fixtures/model-only
+          output-dir: _site-model-only
+          repository: CameronBrooks11/engine-model-only
+
+      - name: Check what the fixture promises
+        run: python3 build/test/expect_model_only.py "${{ steps.engine.outputs.site-dir }}" "${{ steps.engine.outputs.summary }}"
