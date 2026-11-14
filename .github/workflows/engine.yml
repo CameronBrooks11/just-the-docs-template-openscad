@@ -106,3 +106,23 @@ jobs:
 
       - name: Check what the fixture promises
         run: python3 build/test/expect_opt_out.py "${{ steps.engine.outputs.site-dir }}" "${{ steps.engine.outputs.summary }}"
+
+  embed:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Build the embed fixture with the engine
+        id: engine
+        uses: ./build
+        with:
+          source-dir: build/test/fixtures/embed
+          output-dir: _site-embed
+          repository: CameronBrooks11/engine-embed
+
+      - name: Check what the fixture promises
+        run: python3 build/test/expect_embed.py "${{ steps.engine.outputs.site-dir }}" "${{ steps.engine.outputs.summary }}"
+
+      - name: Refuse an examples value that isn't none or embed
+        run: bash build/test/refuse_bad_examples.sh build/assemble.py
