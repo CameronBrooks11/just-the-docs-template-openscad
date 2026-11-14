@@ -38,7 +38,7 @@ def main(argv):
         checks += [
             ("the static mount has a viewer and a poster",
              (site / "models/block/index.html").is_file() and (site / "models/block/poster.png").is_file()),
-            ("the live mount has the library beside the example",
+            ("the live mount is published",
              (site / "models/block-live/index.html").is_file()),
         ]
     failed = [label for label, ok in checks if not ok]
