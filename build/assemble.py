@@ -283,9 +283,16 @@ def fetch_libraries(libs, libs_dir):
 
 
 def stage_libraries(libs_dir, libs, stage, entries):
-    """Copy each library into the live customizer's project beside every entry, as
-    openscad-web resolves an include relative to the including file."""
-    for d in sorted({Path(e).parent for e in entries}):
+    """Copy each library into the live customizer's project beside every entry and
+    every repo file that includes it, as openscad-web resolves an include relative
+    to the including file. iLOX's examples include iLOX.scad at the repo root, and
+    only that file includes tessella."""
+    dirs = {Path(e).parent for e in entries}
+    names = "|".join(re.escape(name) for name, _, _ in libs)
+    for p in stage.rglob("*.scad"):
+        if re.search(rf"\b(?:include|use)\s*<\s*(?:{names})/", p.read_text(errors="replace")):
+            dirs.add(p.parent.relative_to(stage))
+    for d in sorted(dirs):
         for name, _, _ in libs:
             if (stage / d / name).exists():
                 sys.exit(f"library {name} would overwrite {d / name} in the repo")
