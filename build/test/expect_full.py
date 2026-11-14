@@ -48,10 +48,11 @@ def main(argv):
          and 'data-live-src="/engine-full/models/shapes-cube-live/"' in shapes),
         ("examples are grouped by folder, slugs include the folder",
          re.findall(r'<h([23])[^>]*id="([^"]*)"', examples)
-         == [("2", "flat"), ("3", "flat-disc"), ("2", "shapes"), ("3", "shapes-cube")]),
+         == [("2", "3d"), ("3", "example-3d-ring"), ("2", "flat"), ("3", "flat-disc"),
+             ("2", "shapes"), ("3", "shapes-cube")]),
         ("the summary lists the pages and the nested examples",
          sorted(summary["pages"]) == ["guide/index.html", "guide/shapes.html", "index.html"]
-         and [e["slug"] for e in summary["examples"]] == ["flat-disc", "shapes-cube"]),
+         and [e["slug"] for e in summary["examples"]] == ["example-3d-ring", "flat-disc", "shapes-cube"]),
     ]
     if models:
         checks.append(("the inline embed's mounts are published",
