@@ -3,8 +3,9 @@
 
 usage: expect_library.py SITE_DIR SUMMARY_JSON [--no-models]
 
-The fixture (build/test/fixtures/library) has one example, examples/grid.scad,
-that uses tessella, a library outside the repo that docs-site.yml names. The
+The fixture (build/test/fixtures/library) has examples/grid.scad, which uses
+tessella, and examples/tile.scad, which only includes shapes.scad at the root,
+which uses tessella: a library outside the repo that docs-site.yml names. The
 build only succeeds if the engine fetched it and rendered with it; these check
 what it published.
 """
@@ -17,9 +18,15 @@ def main(argv):
     site, summary = Path(argv[0]), json.loads(Path(argv[1]).read_text())
     models = "--no-models" not in argv
     examples = (site / "examples.html").read_text() if (site / "examples.html").is_file() else ""
+    # The staged project for the live customizer sits beside the summary.
+    project = Path(argv[1]).parent / "project"
     checks = [
         ("the summary lists the library", summary.get("libraries") == ["tessella"]),
-        ("the example rendered in 3D", summary["examples"] == [{"name": "grid", "slug": "grid", "is3d": True}]),
+        ("both examples rendered in 3D",
+         summary["examples"] == [{"name": "grid", "slug": "grid", "is3d": True},
+                                 {"name": "tile", "slug": "tile", "is3d": True}]),
+        ("the library is staged beside the entries and beside the root file that includes it",
+         (project / "examples/tessella/tess.scad").is_file() and (project / "tessella/tess.scad").is_file()),
         ("the example is embedded with a live upgrade",
          'data-src="/engine-library/models/grid/"' in examples
          and 'data-live-src="/engine-library/models/grid-live/"' in examples),
