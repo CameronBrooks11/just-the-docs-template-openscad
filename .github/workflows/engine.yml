@@ -1,0 +1,40 @@
+# Builds the lite fixture with the engine (build/) as a consumer would, then
+# checks the site, including the 3D mounts openscad-web adds, which a local
+# build (build/test/build_local.sh) cannot.
+
+name: Engine
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lite:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Build the lite fixture with the engine
+        id: engine
+        uses: ./build
+        with:
+          source-dir: build/test/fixtures/lite
+          output-dir: _site-lite
+          repository: CameronBrooks11/engine-fixture
+
+      - name: Check what the fixture promises
+        run: python3 build/test/expect_lite.py "${{ steps.engine.outputs.site-dir }}" "${{ steps.engine.outputs.summary }}"
+
+      - name: Keep the built site for inspection
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: engine-lite-site
+          path: _site-lite
+          retention-days: 7
