@@ -7,7 +7,10 @@ usage: assemble.py --repo DIR --theme DIR --out DIR --render DIR --site-dir DIR
 The repo's README.md becomes the home page; each examples/*.scad becomes an
 entry on an Examples page, rendered with the OpenSCAD CLI. Files named by
 docs-site.yml's `models:` key (comma-separated paths) go the same way onto a
-Model page before it, for a repo whose main file is the model. The theme (Gemfile,
+Model page before it, for a repo whose main file is the model. Its `libraries:`
+key (name=owner/repo@ref, comma-separated) names outside libraries: each is
+cloned at its ref, put on OPENSCADPATH for the renders, and copied beside each
+published file for the live customizer. The theme (Gemfile,
 styles, includes, plugins, scripts and base _config.yml) comes from --theme,
 the template's own docs/ folder. Writes:
 
@@ -143,6 +146,45 @@ def read_models(repo, cfg):
     return models
 
 
+LIBRARY = re.compile(r"^([A-Za-z0-9_.-]+)=([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)@([A-Za-z0-9_./-]+)$")
+
+
+def read_libraries(cfg):
+    """The libraries: key's entries, each name=owner/repo@ref, as (name, owner/repo, ref)."""
+    libs = []
+    for entry in (p.strip() for p in cfg.get("libraries", "").split(",")):
+        if not entry:
+            continue
+        m = LIBRARY.match(entry)
+        if not m or m.group(1) in (".", ".."):
+            sys.exit(f"docs-site.yml libraries: {entry} is not name=owner/repo@ref")
+        libs.append(m.groups())
+    return libs
+
+
+def fetch_libraries(libs, libs_dir):
+    """Clone each library from GitHub at its ref into libs_dir/<name>."""
+    for name, source, ref in libs:
+        dest = libs_dir / name
+        url = f"https://github.com/{source}.git"
+        steps = [["git", "clone", "--quiet", "--filter=blob:none", "--no-checkout", url, str(dest)],
+                 ["git", "-C", str(dest), "checkout", "--quiet", "--detach", ref]]
+        for cmd in steps:
+            r = run(cmd, libs_dir, timeout=300)
+            if r.returncode != 0:
+                sys.exit(f"could not fetch library {name} from {source} at {ref}:\n{r.stdout}{r.stderr}")
+
+
+def stage_libraries(libs_dir, libs, stage, entries):
+    """Copy each library into the live customizer's project beside every entry, as
+    openscad-web resolves an include relative to the including file."""
+    for d in sorted({Path(e).parent for e in entries}):
+        for name, _, _ in libs:
+            if (stage / d / name).exists():
+                sys.exit(f"library {name} would overwrite {d / name} in the repo")
+            stage_project(libs_dir / name, stage / d / name)
+
+
 def leading_comment(scad_text):
     """The comment lines at the top of an example: its title and description."""
     lines = []
@@ -248,11 +290,20 @@ def main():
     cfg = read_config(repo)
     live = a.live.lower() == "true" and cfg.get("live", "true").lower() == "true"
     models = read_models(repo, cfg)
+    libs = read_libraries(cfg)
 
     for d in (out, render_dir):
         if d.exists():
             shutil.rmtree(d)
         d.mkdir(parents=True)
+    # Libraries are fetched beside the render output, and put on OpenSCAD's library
+    # path for every render below.
+    libs_dir = render_dir / "libraries"
+    if libs:
+        libs_dir.mkdir()
+        fetch_libraries(libs, libs_dir)
+        os.environ["OPENSCADPATH"] = os.pathsep.join(
+            p for p in (str(libs_dir), os.environ.get("OPENSCADPATH", "")) if p)
     for part in THEME_PARTS:
         src = a.theme / part
         if src.is_dir():
@@ -300,6 +351,10 @@ def main():
 
     if models or examples:
         stage_project(repo, render_dir / "project")
+        if libs:
+            entries = models + [ex.relative_to(repo).as_posix() for ex in examples]
+            stage_libraries(libs_dir, libs, render_dir / "project", entries)
+    summary["libraries"] = [name for name, _, _ in libs]
     nav = 2
     if models:
         sections = []

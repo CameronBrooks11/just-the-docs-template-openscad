@@ -55,3 +55,20 @@ jobs:
 
       - name: Check what the fixture promises
         run: python3 build/test/expect_model_only.py "${{ steps.engine.outputs.site-dir }}" "${{ steps.engine.outputs.summary }}"
+
+  library:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Build the library fixture with the engine
+        id: engine
+        uses: ./build
+        with:
+          source-dir: build/test/fixtures/library
+          output-dir: _site-library
+          repository: CameronBrooks11/engine-library
+
+      - name: Check what the fixture promises
+        run: python3 build/test/expect_library.py "${{ steps.engine.outputs.site-dir }}" "${{ steps.engine.outputs.summary }}"
