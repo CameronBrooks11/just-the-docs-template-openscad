@@ -419,7 +419,9 @@ def main():
             shutil.copy2(src, out / part)
     write_config(a.theme / "_config.yml", out, cfg, a.repository, base_path)
 
-    examples = find_examples(repo)
+    # examples: none leaves examples/ to the repo, for one whose examples a page of its
+    # own shows better (drawing sheets, say) or whose folder holds included helpers.
+    examples = [] if cfg.get("examples", "").strip().lower() == "none" else find_examples(repo)
     ex_slugs = {ex.relative_to(repo).as_posix(): example_slug(repo, ex) for ex in examples}
     pages_dir, pages = read_pages(repo, cfg)
     linker = Linker(repo, out, a.repository, models, ex_slugs, pages_dir, pages)
