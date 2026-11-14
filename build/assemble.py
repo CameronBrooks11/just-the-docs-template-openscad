@@ -14,7 +14,7 @@ published file for the live customizer. Its `pages:` key names a folder of the
 repo's own Markdown pages, published beside the generated ones, its index.md
 taking the README's place as the home page. The theme (Gemfile,
 styles, includes, plugins, scripts and base _config.yml) comes from --theme,
-the template's own docs/ folder. Writes:
+the template's theme/ folder. Writes:
 
   OUT/            the Jekyll source tree
   RENDER/         rendered geometry and posters, and the staged .scad project
