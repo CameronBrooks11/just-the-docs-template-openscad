@@ -49,14 +49,35 @@ runs:
           if [[ "${repo#*/}" == *.github.io ]]; then base=""; else base="/${repo#*/}"; fi
         fi
         echo "base=$base" >> "$GITHUB_OUTPUT"
-        if compgen -G "${{ inputs.source-dir }}/examples/*.scad" > /dev/null; then echo "examples=true" >> "$GITHUB_OUTPUT"; fi
 
+    # A pinned development snapshot, not apt's 2021.01: that renders with CGAL, and
+    # heavy examples took over 600 s where the snapshot's Manifold takes seconds.
+    # Snapshots stay on files.openscad.org for months, not forever: move the pin
+    # (the date and its published sha256) by PR. The AppImage is extracted rather
+    # than mounted, so it needs no FUSE. xvfb is the picture fallback assemble.py
+    # uses when offscreen rendering fails.
     - name: Install OpenSCAD
-      if: steps.paths.outputs.examples == 'true'
       shell: bash
+      env:
+        OPENSCAD_SNAPSHOT: "2026.10.15"
+        OPENSCAD_SHA256: "9d26e390d3a5c94f2e304d94d7b2eff77fb11fcd25829f2814de147ba92ac363"
       run: |
+        # The AppImage takes its GL, EGL and window-system libraries from the host
+        # (ldd on the extracted binary); Mesa's EGL draws the pictures offscreen.
         sudo apt-get update -qq
-        sudo apt-get install -y -qq openscad xvfb
+        sudo apt-get install -y -qq libegl1 libegl-mesa0 libgl1 libopengl0 libglx0 libgbm1 \
+          libwayland-client0 libx11-xcb1 xvfb
+        dir="$RUNNER_TEMP/openscad"
+        file="OpenSCAD-$OPENSCAD_SNAPSHOT-x86_64.AppImage"
+        mkdir -p "$dir/bin"
+        curl -fsSL -o "$dir/$file" "https://files.openscad.org/snapshots/$file"
+        echo "$OPENSCAD_SHA256  $dir/$file" | sha256sum -c -
+        chmod +x "$dir/$file"
+        (cd "$dir" && "./$file" --appimage-extract > /dev/null)
+        printf '#!/bin/sh\nexec "%s/squashfs-root/AppRun" "$@"\n' "$dir" > "$dir/bin/openscad"
+        chmod +x "$dir/bin/openscad"
+        echo "$dir/bin" >> "$GITHUB_PATH"
+        "$dir/bin/openscad" --version
 
     - name: Assemble the site source
       id: assemble
