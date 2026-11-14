@@ -1,10 +1,10 @@
 # just-the-docs-template-openscad
 
-This is a documentation template for OpenSCAD template using [just-the-docs](https://github.com/just-the-docs/just-the-docs) adapted from the [just-the-docs-template](https://github.com/just-the-docs/just-the-docs-template). There are OpenSCAD-themed stylings applied in both light and dark options. It is set up such that you can just drop the `docs` and `.github` directories into your existing project and start using it right away. Make sure actions are enabled on your repository before tring to commit and push up the new documentation.
+A documentation site for an OpenSCAD repo, built by a GitHub Action: [Just the Docs](https://github.com/just-the-docs/just-the-docs) with OpenSCAD light and dark colour schemes, 3D views of the repo's models and examples, and a live customizer. The theme is adapted from [just-the-docs-template](https://github.com/just-the-docs/just-the-docs-template).
 
-## Use the engine instead of copying
+## Use it
 
-`build/` is a GitHub Action that builds a site like this one from any OpenSCAD repo, without copying anything into it. The repo keeps one workflow file; the theme, the build and the model embeds stay here and update by version.
+`build/` is the Action. It builds the site from the repo as it is, without copying anything into it: the repo keeps one workflow file, and the theme (in `docs/` here), the build and the model embeds stay in this repo and update by version. Copying `docs/` and `.github/` into a project, as earlier versions of this README said, is no longer the way to use it.
 
 What it publishes:
 
