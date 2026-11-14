@@ -22,6 +22,7 @@ def main(argv):
     index = (site / "index.html").read_text()
     examples = (site / "examples.html").read_text()
     model = (site / "model.html").read_text() if (site / "model.html").is_file() else ""
+    flat = " ".join(examples.split())  # headings end in whitespace before </h2>
     checks = [
         ("the README is the home page", "<h1" in index and "Engine fixture" in index),
         ("the README image is published once", (site / "images/block.png").is_file() and summary["images"] == ["images/block.png"]),
@@ -34,6 +35,9 @@ def main(argv):
          'data-src="/engine-fixture/models/block/"' in examples and 'data-live-src="/engine-fixture/models/block-live/"' in examples),
         ("the 2D example is a picture", (site / "assets/examples/outline.png").is_file() and "assets/examples/outline.png" in examples),
         ("each example shows its source", examples.count("Source: examples/") == 2),
+        ("a title on its own line stays the title", "</a> A rounded block </h2>" in flat),
+        ("a title wrapped over two lines is the whole first sentence",
+         "a picture of it rather than a 3D view. </h2>" in flat and "wraps onto" not in flat.split("</h2>")[1]),
         ("3D and 2D are told apart", {e["name"]: e["is3d"] for e in summary["examples"]} == {"block": True, "outline": False}),
         ("the model has a page, listed before Examples",
          model != "" and 0 <= index.find('href="/engine-fixture/model.html"') < index.find('href="/engine-fixture/examples.html"')),

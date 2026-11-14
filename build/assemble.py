@@ -157,6 +157,30 @@ def leading_comment(scad_text):
     return lines
 
 
+def title_and_body(lines):
+    """Split a leading comment into a title and a description.
+
+    The title is the first sentence, however many lines it wraps over. A first line
+    with no closing punctuation, followed by one that starts with a capital, is a
+    title on its own line, as in "A rounded block" over "The library's one module".
+    """
+    title, rest = [], []
+    for i, line in enumerate(lines):
+        if rest:
+            rest.append(line)
+            continue
+        title.append(line)
+        joined = " ".join(title)
+        m = re.search(r"[.!?](\s+|$)", joined)
+        if m:
+            tail = joined[m.end():].strip()
+            title, rest = [joined[:m.end()].strip()], ([tail] if tail else [""])
+            continue
+        if i + 1 < len(lines) and lines[i + 1][:1].isupper():
+            rest = [""]
+    return " ".join(title), " ".join(r for r in rest if r)
+
+
 def run(cmd, cwd, timeout=600):
     try:
         return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout)
@@ -292,8 +316,8 @@ def main():
         sections = []
         for ex in examples:
             comment = leading_comment(ex.read_text())
-            title = comment[0] if comment else ex.stem.replace("_", " ")
-            text, is3d = section(ex, title, " ".join(comment[1:]), slug(ex.stem))
+            title, body = title_and_body(comment) if comment else (ex.stem.replace("_", " "), "")
+            text, is3d = section(ex, title, body, slug(ex.stem))
             sections.append(text)
             summary["examples"].append({"name": ex.stem, "slug": slug(ex.stem), "is3d": is3d})
         header = f"---\ntitle: Examples\nlayout: default\nnav_order: {nav}\n---\n\n# Examples\n\n"
