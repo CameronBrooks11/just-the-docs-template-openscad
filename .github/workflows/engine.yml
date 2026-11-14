@@ -31,6 +31,9 @@ jobs:
       - name: Check what the fixture promises
         run: python3 build/test/expect_lite.py "${{ steps.engine.outputs.site-dir }}" "${{ steps.engine.outputs.summary }}"
 
+      - name: Test the light/dark script
+        run: node build/test/scheme_test.js
+
       - name: Keep the built site for inspection
         if: always()
         uses: actions/upload-artifact@v7
@@ -124,5 +127,5 @@ jobs:
       - name: Check what the fixture promises
         run: python3 build/test/expect_embed.py "${{ steps.engine.outputs.site-dir }}" "${{ steps.engine.outputs.summary }}"
 
-      - name: Refuse an examples value that isn't none or embed
-        run: bash build/test/refuse_bad_examples.sh build/assemble.py
+      - name: Refuse docs-site.yml values the engine does not know
+        run: bash build/test/refuse_bad_values.sh build/assemble.py

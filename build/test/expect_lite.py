@@ -47,6 +47,11 @@ def main(argv):
          'data-src="/engine-fixture/models/model-src-tray/"' in model and 'data-live-src="/engine-fixture/models/model-src-tray-live/"' in model),
         ("the model shows its source", "Source: src/tray.scad" in model),
         ("the summary lists the model", summary["models"] == [{"path": "src/tray.scad", "slug": "model-src-tray", "is3d": True}]),
+        ("with no color_scheme, the page follows the reader", 'var fixed = "auto";' in index),
+        ("both schemes are built for the switch",
+         (site / "assets/css/just-the-docs-openscad-light.css").is_file()
+         and (site / "assets/css/just-the-docs-openscad-dark.css").is_file()),
+        ("the header has the light/dark toggle", 'class="scheme-toggle"' in index),
     ]
     if models:
         checks += [

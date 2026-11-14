@@ -18,6 +18,9 @@ def main(argv):
     site, summary = Path(argv[0]), json.loads(Path(argv[1]).read_text())
     read = lambda p: (site / p).read_text() if (site / p).is_file() else ""
     index, page = read("index.html"), read("examples/index.html")
+    # Each stylesheet ends with a source-map comment naming itself; compare the rest.
+    css = lambda name: re.sub(r"/\*# sourceMappingURL=[^*]*\*/\s*$", "",
+                              (site / f"assets/css/just-the-docs-{name}.css").read_text())
     nav = re.findall(r'class="nav-list-link[^"]*"[^>]*>([^<]+)<', index)
     part = "https://github.com/CameronBrooks11/engine-opt-out/blob/HEAD/examples/part.scad"
     checks = [
@@ -28,6 +31,10 @@ def main(argv):
         ("the navigation has one Examples entry", nav == ["Home", "Examples"]),
         ("the README links to the hand-written page", 'href="examples/index.html"' in index),
         ("links to an example go to GitHub", f'href="{part}"' in index and f'href="{part}"' in page),
+        ("color_scheme: openscad-dark fixes the scheme", 'var fixed = "openscad-dark";' in index),
+        ("the fixed scheme is the built default", "just-the-docs-default.css" in index
+         and css("default") == css("openscad-dark")),
+        ("the header still has the toggle", 'class="scheme-toggle"' in index),
     ]
     failed = [label for label, ok in checks if not ok]
     for label, ok in checks:

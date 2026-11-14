@@ -12,7 +12,7 @@ A site needs no configuration: the workflow alone builds one from the README and
 |---|---|---|
 | `title` | the repo's name | The site's title. |
 | `description` | empty | The site's description, for search engines and link previews. |
-| `color_scheme` | `openscad-light` | `openscad-dark` for the dark scheme. |
+| `color_scheme` | `auto` | `auto` follows the reader's light or dark system setting. `openscad-light` or `openscad-dark` fixes one scheme. Either way, a toggle in the header lets the reader switch, and their choice is remembered. Any other value stops the build. |
 | `live` | `true` | `false` leaves out the live customizers; the 3D views stay. |
 | `models` | none | Comma-separated paths of files to show on a Model page. See [Models and libraries](models-and-libraries.md). |
 | `libraries` | none | Comma-separated `name=owner/repo@ref` libraries from outside the repo. See [Models and libraries](models-and-libraries.md). |
