@@ -428,10 +428,15 @@ def main():
 
     # examples: none leaves examples/ to the repo, for one whose examples a page of its
     # own shows better (drawing sheets, say) or whose folder holds included helpers.
-    examples = [] if cfg.get("examples", "").strip().lower() == "none" else find_examples(repo)
+    # examples: embed renders them and publishes their mounts for the repo's own pages
+    # to embed, without an Examples page; links to an example then go to GitHub.
+    ex_mode = cfg.get("examples", "").strip().lower()
+    if ex_mode not in ("", "none", "embed"):
+        sys.exit(f"docs-site.yml examples: {ex_mode} is not none or embed")
+    examples = [] if ex_mode == "none" else find_examples(repo)
     ex_slugs = {ex.relative_to(repo).as_posix(): example_slug(repo, ex) for ex in examples}
     pages_dir, pages = read_pages(repo, cfg)
-    linker = Linker(repo, out, a.repository, models, ex_slugs, pages_dir, pages)
+    linker = Linker(repo, out, a.repository, models, {} if ex_mode == "embed" else ex_slugs, pages_dir, pages)
     home_page = f"{pages_dir}/index.md" in pages if pages_dir else False
     if not home_page:
         readme = linker.rewrite((repo / "README.md").read_text())
@@ -509,8 +514,9 @@ def main():
             sections.append(text)
             summary["examples"].append({"name": ex.relative_to(repo / "examples").with_suffix("").as_posix(),
                                         "slug": mount, "is3d": is3d})
-        header = f"---\ntitle: Examples\nlayout: default\nnav_order: {nav}\n---\n\n# Examples\n\n"
-        (out / "examples.md").write_text(header + "\n".join(sections))
+        if ex_mode != "embed":
+            header = f"---\ntitle: Examples\nlayout: default\nnav_order: {nav}\n---\n\n# Examples\n\n"
+            (out / "examples.md").write_text(header + "\n".join(sections))
     if targets:
         (render_dir / "openscad-publish.yml").write_text(
             f"site:\n  outDir: {a.site_dir.resolve()}\n\ntargets:\n" + "".join(targets))
