@@ -56,6 +56,9 @@ def yaml_str(s):
 
 def write_config(theme_cfg, out, cfg, repository, base_path):
     owner, name = repository.split("/")
+    scheme = cfg.get("color_scheme", "").strip() or "auto"
+    if scheme not in ("auto", "openscad-light", "openscad-dark"):
+        sys.exit(f"docs-site.yml color_scheme: {scheme} is not auto, openscad-light or openscad-dark")
     text = theme_cfg.read_text()
     values = {
         "title": yaml_str(cfg.get("title") or name),
@@ -64,7 +67,10 @@ def write_config(theme_cfg, out, cfg, repository, base_path):
         "baseurl": yaml_str(base_path),
         "permalink": "none",  # pages keep their paths, so relative links work as on GitHub
         "repository": yaml_str(repository),
-        "color_scheme": cfg.get("color_scheme", "openscad-light"),
+        # auto follows the reader's preference (head_custom.html swaps the stylesheet);
+        # the built default is light.
+        "color_scheme": "openscad-light" if scheme == "auto" else scheme,
+        "scheme_default": scheme,
     }
     if cfg.get("math", "").lower() == "true":
         values["math"] = "true"
@@ -240,17 +246,6 @@ def publish_pages(repo, out, pages_dir, pages, linker):
             elif p.suffix != ".md" and not dest.exists():
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(p, dest)
-
-
-# Loaded on pages whose front matter sets math: true, or on every page when docs-site.yml
-# does. Inline math is $…$, as on GitHub; MathJax doesn't read single dollars unless told to.
-MATHJAX = """{%- if page.math or site.math %}
-<script>
-  window.MathJax = { tex: { inlineMath: [["$", "$"], ["\\\\(", "\\\\)"]] } };
-</script>
-<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
-{%- endif %}
-"""
 
 
 LIBRARY = re.compile(r"^([A-Za-z0-9_.-]+)=([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)@([A-Za-z0-9_./-]+)$")
@@ -445,9 +440,6 @@ def main():
                                       "{% raw %}\n" + readme.rstrip() + "\n{% endraw %}\n")
     if pages_dir:
         publish_pages(repo, out, pages_dir, pages, linker)
-    if not (out / "_includes" / "head_custom.html").exists():
-        (out / "_includes").mkdir(exist_ok=True)
-        (out / "_includes" / "head_custom.html").write_text(MATHJAX)
 
     summary = {"base_path": base_path, "images": linker.copied, "models": [], "examples": [], "targets": [],
                "pages": [linker.built(p) for p in pages]}

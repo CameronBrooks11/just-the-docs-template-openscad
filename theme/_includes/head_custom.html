@@ -1,0 +1,47 @@
+{%- comment -%}
+  Just-the-Docs head extension point.
+
+  Colour scheme: site.scheme_default is "auto" (follow the reader's system
+  preference) or a fixed scheme. A choice made with the header toggle is kept
+  in localStorage, shared by every site on this origin, and wins over both.
+  This runs before the body, so the page doesn't paint in the wrong scheme.
+
+  MathJax: loaded on pages whose front matter sets math: true, or on every page
+  when docs-site.yml does. Inline math is $…$, as on GitHub; MathJax doesn't
+  read single dollars unless told to.
+{%- endcomment -%}
+<script>
+  (function () {
+    var base = "{{ '/assets/css/just-the-docs-' | relative_url }}";
+    var fixed = "{{ site.scheme_default | default: 'auto' }}";
+    var key = "openscad-docs-scheme";
+    var query = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+    var link = document.querySelector('link[rel="stylesheet"][href*="just-the-docs-default"]');
+    function stored() {
+      try { return localStorage.getItem(key); } catch (e) { return null; }
+    }
+    function pick() {
+      var s = stored();
+      if (s === "openscad-light" || s === "openscad-dark") return s;
+      if (fixed === "openscad-light" || fixed === "openscad-dark") return fixed;
+      return query && query.matches ? "openscad-dark" : "openscad-light";
+    }
+    function apply(scheme) {
+      if (link) link.setAttribute("href", base + scheme + ".css");
+      document.documentElement.setAttribute("data-scheme", scheme);
+    }
+    apply(pick());
+    window.openscadDocsToggleScheme = function () {
+      var next = document.documentElement.getAttribute("data-scheme") === "openscad-dark" ? "openscad-light" : "openscad-dark";
+      try { localStorage.setItem(key, next); } catch (e) {}
+      apply(next);
+    };
+    if (query && query.addEventListener) query.addEventListener("change", function () { apply(pick()); });
+  })();
+</script>
+{%- if page.math or site.math %}
+<script>
+  window.MathJax = { tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+{%- endif %}
