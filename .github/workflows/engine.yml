@@ -89,3 +89,20 @@ jobs:
 
       - name: Check what the fixture promises
         run: python3 build/test/expect_full.py "${{ steps.engine.outputs.site-dir }}" "${{ steps.engine.outputs.summary }}"
+
+  opt-out:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Build the opt-out fixture with the engine
+        id: engine
+        uses: ./build
+        with:
+          source-dir: build/test/fixtures/opt-out
+          output-dir: _site-opt-out
+          repository: CameronBrooks11/engine-opt-out
+
+      - name: Check what the fixture promises
+        run: python3 build/test/expect_opt_out.py "${{ steps.engine.outputs.site-dir }}" "${{ steps.engine.outputs.summary }}"
