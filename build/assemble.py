@@ -190,8 +190,10 @@ def find_examples(repo):
 
 
 def example_slug(repo, ex):
-    """An example's mount and anchor, from its path inside examples/."""
-    return slug(ex.relative_to(repo / "examples").with_suffix("").as_posix())
+    """An example's mount and anchor, from its path inside examples/. Kramdown takes a
+    heading id only if it starts with a letter, so 01_elbow is example-01-elbow."""
+    s = slug(ex.relative_to(repo / "examples").with_suffix("").as_posix())
+    return "example-" + s if s[:1].isdigit() else s
 
 
 PAGE_SKIP_DIRS = SKIP_DIRS | {".jekyll-cache", ".bundle"}
