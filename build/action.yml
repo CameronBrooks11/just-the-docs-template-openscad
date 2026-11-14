@@ -90,6 +90,9 @@ runs:
       uses: CameronBrooks11/openscad-web@v0
       with:
         config: ${{ steps.paths.outputs.render }}/openscad-publish.yml
+        # Nested in this composite action, openscad-web cannot read its own ref
+        # (github.action_ref is empty), so name the artifact version to match @v0.
+        version: v0
 
     - name: Check the site
       shell: bash

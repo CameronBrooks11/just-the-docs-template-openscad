@@ -134,8 +134,11 @@ def leading_comment(scad_text):
     return lines
 
 
-def run(cmd, cwd):
-    return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+def run(cmd, cwd, timeout=600):
+    try:
+        return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 124, "", f"timed out after {timeout} s: {' '.join(cmd[:2])}")
 
 
 def render(repo, example, render_dir):
@@ -151,12 +154,14 @@ def render(repo, example, render_dir):
             sys.exit(f"openscad failed on {rel}:\n{out}")
     # Preview mode keeps color(); a dark scheme suits the viewer it sits in. A
     # current OpenSCAD renders offscreen; an older one (as apt has) needs a
-    # display, so xvfb-run is the fallback rather than the default.
+    # display, so xvfb-run is the fallback rather than the default. Where Xvfb
+    # cannot start (a read-only /tmp, as in a sandbox) xvfb-run waits forever,
+    # so the fallback has a timeout.
     pic = ["openscad", "-o", str(png), "--imgsize=1000,750", "--viewall", "--autocenter",
            "--colorscheme=Tomorrow Night", str(rel)]
     p = run(pic, repo)
     if (p.returncode != 0 or not png.exists()) and shutil.which("xvfb-run"):
-        p = run(["xvfb-run", "-a"] + pic, repo)
+        p = run(["xvfb-run", "-a"] + pic, repo, timeout=120)
     if p.returncode != 0 or not png.exists():
         sys.exit(f"openscad could not render a picture of {rel}:\n{p.stdout}{p.stderr}")
     return is3d
