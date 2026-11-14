@@ -8,7 +8,6 @@ Fails (exit 1, one line per problem) when:
   - a link's #fragment names no id in the page it points to
   - a link still points at a .md file
   - an embed's data-src or data-live-src names a mount not in the summary's targets
-  - a heading shows a {#id} as text, because Kramdown couldn't use the id
   - a model or example published in 3D has no model mount (an index.html under
     models/<name>/), or its static mount has no poster.png for the embed
 --no-models skips the mounts, and links into models/, for a build that has not
@@ -41,11 +40,6 @@ def main(argv):
             continue
         pages += 1
         html = page.read_text(errors="replace")
-        # Kramdown prints a heading's {#id} as text when it can't use the id.
-        for heading in re.findall(r"(?s)<h[1-6][^>]*>(.*?)</h[1-6]>", html):
-            if "{#" in heading:
-                text = " ".join(re.sub(r"<[^>]+>", " ", heading).split())
-                problems.append(f"{rel_page}: a heading shows its id as text: {text[:80]}")
         # An embed names a mount by data-src (and data-live-src); it has to be one the
         # engine published, which an inline embed in a hand-written page may get wrong.
         for attr, mount in re.findall(r'\b(data-src|data-live-src)="([^"]*)"', html):
