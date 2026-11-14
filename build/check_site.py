@@ -7,7 +7,7 @@ Fails (exit 1, one line per problem) when:
   - a local href or src in any page does not resolve to a file in the site
   - a link's #fragment names no id in the page it points to
   - a link still points at a .md file
-  - an example published in 3D has no model mount (an index.html under
+  - a model or example published in 3D has no model mount (an index.html under
     models/<name>/), or its static mount has no poster.png for the embed
 --no-models skips the mounts, and links into models/, for a build that has not
 run openscad-web (a local build).
@@ -72,7 +72,7 @@ def main(argv):
         for mount in summary["targets"]:
             if not (site / mount / "index.html").exists():
                 problems.append(f"model mount {mount}/ has no index.html")
-        for ex in summary["examples"]:
+        for ex in summary.get("models", []) + summary["examples"]:
             if ex["is3d"] and not (site / "models" / ex["slug"] / "poster.png").exists():
                 problems.append(f"models/{ex['slug']}/ has no poster.png for its embed")
 

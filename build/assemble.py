@@ -5,7 +5,9 @@ usage: assemble.py --repo DIR --theme DIR --out DIR --render DIR --site-dir DIR
                    [--repository OWNER/NAME] [--base-path PATH] [--live true|false]
 
 The repo's README.md becomes the home page; each examples/*.scad becomes an
-entry on an Examples page, rendered with the OpenSCAD CLI. The theme (Gemfile,
+entry on an Examples page, rendered with the OpenSCAD CLI. Files named by
+docs-site.yml's `models:` key (comma-separated paths) go the same way onto a
+Model page before it, for a repo whose main file is the model. The theme (Gemfile,
 styles, includes, plugins, scripts and base _config.yml) comes from --theme,
 the template's own docs/ folder. Writes:
 
@@ -73,8 +75,9 @@ def write_config(theme_cfg, out, cfg, repository, base_path):
 class Linker:
     """Rewrite the README's relative links for the site."""
 
-    def __init__(self, repo, out, repository):
+    def __init__(self, repo, out, repository, models=()):
         self.repo, self.out, self.repository = repo, out, repository
+        self.models = {m: model_mount(m) for m in models}
         self.copied = []
 
     def target(self, link):
@@ -95,6 +98,8 @@ class Linker:
             if rel not in self.copied:
                 self.copied.append(rel)
             return rel + anchor
+        if rel in self.models:
+            return "model.html#" + self.models[rel]
         if rel.startswith("examples/") and src.suffix == ".scad":
             return "examples.html#" + slug(src.stem)
         kind = "tree" if src.is_dir() else "blob"
@@ -120,6 +125,24 @@ def slug(s):
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
 
 
+def model_mount(rel):
+    """A model's mount and anchor: prefixed, so it cannot meet an example's."""
+    return "model-" + slug(rel[:-len(".scad")])
+
+
+def read_models(repo, cfg):
+    """The models: key's paths, each a .scad file inside the repo."""
+    models = []
+    for m in (p.strip() for p in cfg.get("models", "").split(",")):
+        if not m:
+            continue
+        rel = os.path.normpath(m)
+        if rel.startswith("..") or os.path.isabs(rel) or not rel.endswith(".scad") or not (repo / rel).is_file():
+            sys.exit(f"docs-site.yml models: {m} is not a .scad file in the repo")
+        models.append(Path(rel).as_posix())
+    return models
+
+
 def leading_comment(scad_text):
     """The comment lines at the top of an example: its title and description."""
     lines = []
@@ -141,11 +164,11 @@ def run(cmd, cwd, timeout=600):
         return subprocess.CompletedProcess(cmd, 124, "", f"timed out after {timeout} s: {' '.join(cmd[:2])}")
 
 
-def render(repo, example, render_dir):
-    """Render one example: OFF + poster for 3D, a picture for 2D."""
+def render(repo, example, render_dir, name):
+    """Render one file as NAME.off and NAME.png: OFF + poster for 3D, a picture for 2D."""
     rel = example.relative_to(repo)
-    off = render_dir / f"{example.stem}.off"
-    png = render_dir / f"{example.stem}.png"
+    off = render_dir / f"{name}.off"
+    png = render_dir / f"{name}.png"
     r = run(["openscad", "-o", str(off), str(rel)], repo)
     is3d = r.returncode == 0 and off.exists() and off.stat().st_size > 0
     if not is3d:
@@ -200,6 +223,7 @@ def main():
     base_path = a.base_path if a.base_path is not None else ("" if name.lower().endswith(".github.io") else "/" + name)
     cfg = read_config(repo)
     live = a.live.lower() == "true" and cfg.get("live", "true").lower() == "true"
+    models = read_models(repo, cfg)
 
     for d in (out, render_dir):
         if d.exists():
@@ -213,58 +237,74 @@ def main():
             shutil.copy2(src, out / part)
     write_config(a.theme / "_config.yml", out, cfg, a.repository, base_path)
 
-    linker = Linker(repo, out, a.repository)
+    linker = Linker(repo, out, a.repository, models)
     readme = linker.rewrite((repo / "README.md").read_text())
     # raw: a README is plain Markdown, and Liquid must not read its braces.
     (out / "index.md").write_text("---\ntitle: Home\nlayout: default\nnav_order: 1\npermalink: /\n---\n\n"
                                   "{% raw %}\n" + readme.rstrip() + "\n{% endraw %}\n")
 
     examples = sorted((repo / "examples").glob("*.scad")) if (repo / "examples").is_dir() else []
-    summary = {"base_path": base_path, "images": linker.copied, "examples": [], "targets": []}
+    summary = {"base_path": base_path, "images": linker.copied, "models": [], "examples": [], "targets": []}
+    targets = []
+
+    def section(src, title, body, mount, heading=None):
+        """Render one file, add its mounts, and return its page section."""
+        rel = src.relative_to(repo).as_posix()
+        live_mount = mount + "-live"
+        is3d = render(repo, src, render_dir, mount)
+        sec = [f"## {heading or title} {{#{mount}}}", "", body, ""]
+        if is3d:
+            targets.append(f"  - surface: static\n    geometry: ./{mount}.off\n    poster: ./{mount}.png\n"
+                           f"    mountPath: /models/{mount}/\n    title: {yaml_str(title)}\n")
+            summary["targets"].append(f"models/{mount}")
+            if live:
+                targets.append(f"  - surface: customizer\n    projectRoot: ./project\n"
+                               f"    entry: ./{rel}\n    mountPath: /models/{live_mount}/\n"
+                               f"    controls: true\n    download: true\n    title: {yaml_str(title + ' (interactive)')}\n")
+                summary["targets"].append(f"models/{live_mount}")
+            live_arg = f' live="{live_mount}"' if live else ""
+            sec.append(f'{{% include openscad.html model="{mount}"{live_arg} title={yaml_str(title)} %}}')
+        else:
+            pic = f"assets/examples/{mount}.png"
+            (out / "assets/examples").mkdir(parents=True, exist_ok=True)
+            shutil.copy2(render_dir / f"{mount}.png", out / pic)
+            sec.append(f"![{title}]({pic})")
+        sec += ["", "<details markdown=\"1\">", f"<summary>Source: {rel}</summary>", "",
+                "{% raw %}", "```openscad", src.read_text().rstrip(), "```", "{% endraw %}", "", "</details>", "",
+                f"[{rel} on GitHub](https://github.com/{a.repository}/blob/HEAD/{rel})", ""]
+        return "\n".join(sec), is3d
+
+    if models or examples:
+        stage_project(repo, render_dir / "project")
+    nav = 2
+    if models:
+        sections = []
+        for m in models:
+            # A model's own header comment is often a file banner, so its path is its title.
+            text, is3d = section(repo / m, m, "", model_mount(m), heading=f"`{m}`")
+            sections.append(text)
+            summary["models"].append({"path": m, "slug": model_mount(m), "is3d": is3d})
+        title = "Model" if len(models) == 1 else "Models"
+        header = f"---\ntitle: {title}\nlayout: default\nnav_order: {nav}\n---\n\n# {title}\n\n"
+        (out / "model.md").write_text(header + "\n".join(sections))
+        nav += 1
     if examples:
-        stage = render_dir / "project"
-        stage_project(repo, stage)
-        targets, sections = [], []
+        sections = []
         for ex in examples:
-            is3d = render(repo, ex, render_dir)
-            text = ex.read_text()
-            comment = leading_comment(text)
+            comment = leading_comment(ex.read_text())
             title = comment[0] if comment else ex.stem.replace("_", " ")
-            body = " ".join(comment[1:])
-            mount, live_mount = slug(ex.stem), slug(ex.stem) + "-live"
-            sec = [f"## {title} {{#{mount}}}", "", body, ""]
-            if is3d:
-                targets.append(f"  - surface: static\n    geometry: ./{ex.stem}.off\n    poster: ./{ex.stem}.png\n"
-                               f"    mountPath: /models/{mount}/\n    title: {yaml_str(title)}\n")
-                if live:
-                    targets.append(f"  - surface: customizer\n    projectRoot: ./project\n"
-                                   f"    entry: ./{ex.relative_to(repo).as_posix()}\n    mountPath: /models/{live_mount}/\n"
-                                   f"    controls: true\n    download: true\n    title: {yaml_str(title + ' (interactive)')}\n")
-                live_arg = f' live="{live_mount}"' if live else ""
-                sec.append(f'{{% include openscad.html model="{mount}"{live_arg} title={yaml_str(title)} %}}')
-            else:
-                pic = f"assets/examples/{ex.stem}.png"
-                (out / "assets/examples").mkdir(parents=True, exist_ok=True)
-                shutil.copy2(render_dir / f"{ex.stem}.png", out / pic)
-                sec.append(f"![{title}]({pic})")
-            rel = ex.relative_to(repo).as_posix()
-            sec += ["", "<details markdown=\"1\">", f"<summary>Source: {rel}</summary>", "",
-                    "{% raw %}", "```openscad", text.rstrip(), "```", "{% endraw %}", "", "</details>", "",
-                    f"[{rel} on GitHub](https://github.com/{a.repository}/blob/HEAD/{rel})", ""]
-            sections.append("\n".join(s for s in sec if s is not None))
-            summary["examples"].append({"name": ex.stem, "slug": mount, "is3d": is3d})
-            if is3d:
-                summary["targets"].append(f"models/{mount}")
-                if live:
-                    summary["targets"].append(f"models/{live_mount}")
-        header = "---\ntitle: Examples\nlayout: default\nnav_order: 2\n---\n\n# Examples\n\n"
+            text, is3d = section(ex, title, " ".join(comment[1:]), slug(ex.stem))
+            sections.append(text)
+            summary["examples"].append({"name": ex.stem, "slug": slug(ex.stem), "is3d": is3d})
+        header = f"---\ntitle: Examples\nlayout: default\nnav_order: {nav}\n---\n\n# Examples\n\n"
         (out / "examples.md").write_text(header + "\n".join(sections))
-        if targets:
-            (render_dir / "openscad-publish.yml").write_text(
-                f"site:\n  outDir: {a.site_dir.resolve()}\n\ntargets:\n" + "".join(targets))
+    if targets:
+        (render_dir / "openscad-publish.yml").write_text(
+            f"site:\n  outDir: {a.site_dir.resolve()}\n\ntargets:\n" + "".join(targets))
     (render_dir / "summary.json").write_text(json.dumps(summary, indent=2))
-    print(f"assembled {out}: home page, {len(examples)} examples "
-          f"({sum(e['is3d'] for e in summary['examples'])} in 3D), {len(linker.copied)} images; base path '{base_path}'")
+    print(f"assembled {out}: home page, {len(models)} models, {len(examples)} examples "
+          f"({sum(e['is3d'] for e in summary['models'] + summary['examples'])} in 3D), "
+          f"{len(linker.copied)} images; base path '{base_path}'")
 
 
 if __name__ == "__main__":

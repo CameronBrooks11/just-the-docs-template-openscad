@@ -10,7 +10,8 @@ What it publishes:
 
 - `README.md` becomes the home page. Images it shows are published beside it; links to an example go to that example; links to any other file go to the file on GitHub.
 - Each `examples/*.scad` is rendered with OpenSCAD onto an Examples page: a 3D view that loads when clicked, with a live customizer behind it, or a picture if the example is 2D. The first lines of `//` comments become its title and description.
-- An optional `docs-site.yml` sets `title`, `description`, `color_scheme` (`openscad-light` or `openscad-dark`) and `live` (`false` to leave out the customizer).
+- For a repo whose main file is the model, `models:` in `docs-site.yml` names it, or several, comma-separated (`models: src/house.scad`). Each goes on a Model page before the examples, titled by its path, with the same 3D view and customizer, and README links to it go there. The customizer shows the file's own parameters, so they need OpenSCAD's Customizer comments to read well.
+- An optional `docs-site.yml` sets `title`, `description`, `color_scheme` (`openscad-light` or `openscad-dark`), `live` (`false` to leave out the customizer) and `models`.
 
 Every build checks its own links, anchors and model mounts, and fails rather than publishing a broken page.
 

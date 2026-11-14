@@ -5,8 +5,9 @@ usage: expect_lite.py SITE_DIR SUMMARY_JSON [--no-models]
 
 The fixture (build/test/fixtures/lite) has a README with an image used twice,
 links to a library, a non-published note, the licence, an example and an
-anchor, and literal {{ braces }}; and two examples, block.scad (3D, using the
-library) and outline.scad (2D).
+anchor, a model and literal {{ braces }}; a model, src/tray.scad (3D, using the
+library), named by docs-site.yml's models key; and two examples, block.scad
+(3D, using the library) and outline.scad (2D).
 """
 import json
 import sys
@@ -20,6 +21,7 @@ def main(argv):
     models = "--no-models" not in argv
     index = (site / "index.html").read_text()
     examples = (site / "examples.html").read_text()
+    model = (site / "model.html").read_text() if (site / "model.html").is_file() else ""
     checks = [
         ("the README is the home page", "<h1" in index and "Engine fixture" in index),
         ("the README image is published once", (site / "images/block.png").is_file() and summary["images"] == ["images/block.png"]),
@@ -33,6 +35,14 @@ def main(argv):
         ("the 2D example is a picture", (site / "assets/examples/outline.png").is_file() and "assets/examples/outline.png" in examples),
         ("each example shows its source", examples.count("Source: examples/") == 2),
         ("3D and 2D are told apart", {e["name"]: e["is3d"] for e in summary["examples"]} == {"block": True, "outline": False}),
+        ("the model has a page, listed before Examples",
+         model != "" and 0 <= index.find('href="/engine-fixture/model.html"') < index.find('href="/engine-fixture/examples.html"')),
+        ("a link to the model goes to its section", 'href="model.html#model-src-tray"' in index),
+        ("the model is titled by its path", 'id="model-src-tray"' in model and ">src/tray.scad</code>" in model),
+        ("the model is embedded with a live upgrade",
+         'data-src="/engine-fixture/models/model-src-tray/"' in model and 'data-live-src="/engine-fixture/models/model-src-tray-live/"' in model),
+        ("the model shows its source", "Source: src/tray.scad" in model),
+        ("the summary lists the model", summary["models"] == [{"path": "src/tray.scad", "slug": "model-src-tray", "is3d": True}]),
     ]
     if models:
         checks += [
@@ -40,6 +50,8 @@ def main(argv):
              (site / "models/block/index.html").is_file() and (site / "models/block/poster.png").is_file()),
             ("the live mount is published",
              (site / "models/block-live/index.html").is_file()),
+            ("the model's mounts are published, with a poster",
+             (site / "models/model-src-tray/poster.png").is_file() and (site / "models/model-src-tray-live/index.html").is_file()),
         ]
     failed = [label for label, ok in checks if not ok]
     for label, ok in checks:
