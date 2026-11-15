@@ -6,8 +6,9 @@ usage: expect_library.py SITE_DIR SUMMARY_JSON [--no-models]
 The fixture (build/test/fixtures/library) has examples/grid.scad, which uses
 tessella, and examples/tile.scad, which only includes shapes.scad at the root,
 which uses tessella: a library outside the repo that docs-site.yml names. The
-build only succeeds if the engine fetched it and rendered with it; these check
-what it published.
+scadman fixture (build/test/fixtures/scadman) is the same repo with tessella
+pinned by scadman.lock instead. The build only succeeds if the engine fetched
+the library and rendered with it; these check what it published.
 """
 import json
 import sys
@@ -20,6 +21,7 @@ def main(argv):
     examples = (site / "examples.html").read_text() if (site / "examples.html").is_file() else ""
     # The staged project for the live customizer sits beside the summary.
     project = Path(argv[1]).parent / "project"
+    base = summary["base_path"]
     checks = [
         ("the summary lists the library", summary.get("libraries") == ["tessella"]),
         ("both examples rendered in 3D",
@@ -28,8 +30,8 @@ def main(argv):
         ("the library is staged beside the entries and beside the root file that includes it",
          (project / "examples/tessella/tess.scad").is_file() and (project / "tessella/tess.scad").is_file()),
         ("the example is embedded with a live upgrade",
-         'data-src="/engine-library/models/grid/"' in examples
-         and 'data-live-src="/engine-library/models/grid-live/"' in examples),
+         f'data-src="{base}/models/grid/"' in examples
+         and f'data-live-src="{base}/models/grid-live/"' in examples),
     ]
     if models:
         checks.append(("the example's mounts are published, with a poster",

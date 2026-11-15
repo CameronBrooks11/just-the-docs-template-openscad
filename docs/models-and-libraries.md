@@ -40,3 +40,13 @@ finds an include relative to the file that includes it, the library is copied be
 repo file that includes it.
 
 The ref is pinned: a library update reaches the site only when the repo changes the ref.
+
+### With scadman
+
+A repo that pins its libraries with [scadman](https://github.com/CameronBrooks11/scadman) needs no `libraries:` key.
+When the repo has a `scadman.lock`, the engine installs scadman and runs `scadman env`. That fetches each library at the
+commit the lock records, and the engine renders and stages them the same way as above. Commit both `scadman.toml` and
+`scadman.lock`. A lock that no longer matches `scadman.toml` stops the build with scadman's message: run `scadman lock`
+and commit the result.
+
+`libraries:` and `scadman.lock` together stop the build too, so that only one of them pins the libraries.
