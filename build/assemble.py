@@ -10,7 +10,8 @@ docs-site.yml's `models:` key (comma-separated paths) go the same way onto a
 Model page before it, for a repo whose main file is the model. Its `libraries:`
 key (name=owner/repo@ref, comma-separated) names outside libraries: each is
 cloned at its ref, put on OPENSCADPATH for the renders, and copied beside each
-published file for the live customizer. Its `pages:` key names a folder of the
+published file for the live customizer. A repo with a scadman.lock gets its
+libraries from scadman instead, the same way. Its `pages:` key names a folder of the
 repo's own Markdown pages, published beside the generated ones, its index.md
 taking the README's place as the home page. The theme (Gemfile,
 styles, includes, plugins, scripts and base _config.yml) comes from --theme,
@@ -277,6 +278,16 @@ def fetch_libraries(libs, libs_dir):
                 sys.exit(f"could not fetch library {name} from {source} at {ref}:\n{r.stdout}{r.stderr}")
 
 
+def sync_scadman(repo):
+    """Materialize the libraries scadman.lock pins (`scadman env` syncs, then
+    prints its environment folder: one entry per library, named as the includes
+    name it) and return that folder."""
+    r = run(["scadman", "env"], repo, timeout=600)
+    if r.returncode != 0:
+        sys.exit(f"scadman env failed in the repo:\n{r.stdout}{r.stderr}")
+    return Path(r.stdout.strip())
+
+
 def stage_libraries(libs_dir, libs, stage, entries):
     """Copy each library into the live customizer's project beside every entry and
     every repo file that includes it, as openscad-web resolves an include relative
@@ -400,6 +411,9 @@ def main():
     live = a.live.lower() == "true" and cfg.get("live", "true").lower() == "true"
     models = read_models(repo, cfg)
     libs = read_libraries(cfg)
+    scadman_lock = (repo / "scadman.lock").is_file()
+    if scadman_lock and libs:
+        sys.exit("docs-site.yml libraries: and scadman.lock both name libraries: keep one")
 
     for d in (out, render_dir):
         if d.exists():
@@ -408,9 +422,14 @@ def main():
     # Libraries are fetched beside the render output, and put on OpenSCAD's library
     # path for every render below.
     libs_dir = render_dir / "libraries"
-    if libs:
+    # A repo with scadman.lock gets them from scadman instead.
+    if scadman_lock:
+        libs_dir = sync_scadman(repo)
+        libs = [(p.name, "scadman.lock", "") for p in sorted(libs_dir.iterdir())]
+    elif libs:
         libs_dir.mkdir()
         fetch_libraries(libs, libs_dir)
+    if libs:
         os.environ["OPENSCADPATH"] = os.pathsep.join(
             p for p in (str(libs_dir), os.environ.get("OPENSCADPATH", "")) if p)
     for part in THEME_PARTS:

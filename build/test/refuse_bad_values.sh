@@ -25,4 +25,17 @@ refuse() {  # refuse KEY BAD MESSAGE
 
 refuse examples embedd "examples: embedd is not none or embed"
 refuse color_scheme purple "color_scheme: purple is not auto, openscad-light or openscad-dark"
+
+# Libraries named twice: by docs-site.yml and by scadman.lock.
+work=$(mktemp -d)
+cp -r "$here/test/fixtures/library" "$work/repo"
+cp "$here/test/fixtures/scadman/scadman.toml" "$here/test/fixtures/scadman/scadman.lock" "$work/repo/"
+if python3 -B "$assemble" --repo "$work/repo" --theme "$here/../theme" --out "$work/src" \
+     --render "$work/render" --site-dir "$work/site" --repository CameronBrooks11/engine-library >"$work/out.txt" 2>&1; then
+  echo "FAIL libraries: with scadman.lock was accepted"; failed=1
+elif grep -q "libraries: and scadman.lock both name libraries" "$work/out.txt"; then
+  echo "ok   libraries: with scadman.lock is refused"
+else
+  echo "FAIL libraries: with scadman.lock stopped the build for another reason:"; tail -3 "$work/out.txt"; failed=1
+fi
 exit $failed

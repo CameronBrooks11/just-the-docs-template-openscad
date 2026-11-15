@@ -1,0 +1,6 @@
+[project]
+name = "scadman"
+
+[dependencies.tessella]
+git = "https://github.com/CameronBrooks11/tessella"
+rev = "6a9cc241326e7d598ab497bcd262fd7a99e49fca"
