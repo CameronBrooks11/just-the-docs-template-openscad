@@ -80,22 +80,17 @@ runs:
         "$dir/bin/openscad" --version
 
     # Only for a repo with a scadman.lock: assemble.py gets its libraries from
-    # `scadman env`, which syncs them. Pinned to a release and its published sha256; move both by PR.
-    - name: Install scadman
+    # `scadman env`, which syncs them. scadman's own setup action installs the release it
+    # is pinned at, checked against that release's checksums.txt. Move the pin by PR.
+    - name: Does the repo pin its libraries with scadman?
+      id: scadman
       shell: bash
-      env:
-        SCADMAN_VERSION: "v0.1.0-alpha.4"
-        SCADMAN_SHA256: "6e5afe41bec97f63db17ce216f2bb52399a4cfb19901577fe6fc8286c295b2b3"
       run: |
-        [ -f "${{ inputs.source-dir }}/scadman.lock" ] || exit 0
-        dir="$RUNNER_TEMP/scadman"
-        file="scadman-$SCADMAN_VERSION-x86_64-unknown-linux-gnu.tar.gz"
-        mkdir -p "$dir"
-        curl -fsSL -o "$dir/$file" "https://github.com/CameronBrooks11/scadman/releases/download/$SCADMAN_VERSION/$file"
-        echo "$SCADMAN_SHA256  $dir/$file" | sha256sum -c -
-        tar -xzf "$dir/$file" -C "$dir" scadman
-        echo "$dir" >> "$GITHUB_PATH"
-        "$dir/scadman" --version
+        if [ -f "${{ inputs.source-dir }}/scadman.lock" ]; then echo "lock=true" >> "$GITHUB_OUTPUT"; fi
+
+    - name: Install scadman
+      if: steps.scadman.outputs.lock == 'true'
+      uses: CameronBrooks11/scadman/setup@v0.1.0-alpha.7
 
     - name: Assemble the site source
       id: assemble
