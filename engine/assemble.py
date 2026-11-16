@@ -186,7 +186,7 @@ def read_models(repo, cfg):
 def find_examples(repo):
     """examples/*.scad; or, when there are none at the top, examples/<folder>/**.scad,
     grouped by folder. A repo with both keeps only the top level, so folders of data
-    files that examples include (pixelArtSCAD's examples/art) stay out."""
+    files that examples include (pixel-art-scad's examples/art) stay out."""
     d = repo / "examples"
     if not d.is_dir():
         return []
