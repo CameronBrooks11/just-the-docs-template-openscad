@@ -3,7 +3,7 @@
 
 usage: expect_opt_out.py SITE_DIR SUMMARY_JSON
 
-The fixture (build/test/fixtures/opt-out) sets `pages: docs` and `examples: none`.
+The fixture (engine/test/fixtures/opt-out) sets `pages: docs` and `examples: none`.
 Its docs/ has no index.md, so the README is home, and a hand-written
 docs/examples/index.md. Its examples/part.scad draws nothing, so rendering it
 would fail the build.

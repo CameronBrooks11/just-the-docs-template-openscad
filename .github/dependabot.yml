@@ -7,8 +7,8 @@ updates:
     allow:
       - dependency-type: direct
   - package-ecosystem: "github-actions"
-    # / covers .github/workflows; /build is the engine's own composite action.
-    directories: ["/", "/build"]
+    # / covers .github/workflows and the engine's own action.yml at the root.
+    directory: "/"
     schedule:
       interval: daily
       time: "10:00"

@@ -1,6 +1,6 @@
 // Test the colour-scheme script in theme/_includes/head_custom.html against a
 // stubbed browser: which stylesheet it picks, the toggle, and system changes.
-// usage: node build/test/scheme_test.js
+// usage: node engine/test/scheme_test.js
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");

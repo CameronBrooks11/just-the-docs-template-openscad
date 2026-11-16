@@ -3,10 +3,10 @@
 
 usage: expect_library.py SITE_DIR SUMMARY_JSON [--no-models]
 
-The fixture (build/test/fixtures/library) has examples/grid.scad, which uses
+The fixture (engine/test/fixtures/library) has examples/grid.scad, which uses
 tessella, and examples/tile.scad, which only includes shapes.scad at the root,
 which uses tessella: a library outside the repo that docs-site.yml names. The
-scadman fixture (build/test/fixtures/scadman) is the same repo with tessella
+scadman fixture (engine/test/fixtures/scadman) is the same repo with tessella
 pinned by scadman.lock instead. The build only succeeds if the engine fetched
 the library and rendered with it; these check what it published.
 """
