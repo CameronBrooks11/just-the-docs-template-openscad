@@ -3,7 +3,7 @@
 
 usage: expect_embed.py SITE_DIR SUMMARY_JSON [--no-models]
 
-The fixture (build/test/fixtures/embed) sets `pages: docs` and `examples: embed`.
+The fixture (engine/test/fixtures/embed) sets `pages: docs` and `examples: embed`.
 Its docs/examples.md embeds examples/cube.scad by its mount, so the engine has to
 render the example and publish its mounts without writing an Examples page.
 """

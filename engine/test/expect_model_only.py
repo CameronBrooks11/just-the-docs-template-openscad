@@ -3,7 +3,7 @@
 
 usage: expect_model_only.py SITE_DIR SUMMARY_JSON [--no-models]
 
-The fixture (build/test/fixtures/model-only) has a README, one model named by
+The fixture (engine/test/fixtures/model-only) has a README, one model named by
 docs-site.yml's models key, and no examples/ folder.
 """
 import json

@@ -3,7 +3,7 @@
 
 usage: expect_lite.py SITE_DIR SUMMARY_JSON [--no-models]
 
-The fixture (build/test/fixtures/lite) has a README with an image used twice,
+The fixture (engine/test/fixtures/lite) has a README with an image used twice,
 links to a library, a non-published note, the licence, an example and an
 anchor, a model and literal {{ braces }}; a model, src/tray.scad (3D, using the
 library), named by docs-site.yml's models key; and two examples, block.scad

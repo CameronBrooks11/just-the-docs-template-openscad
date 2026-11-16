@@ -3,7 +3,7 @@
 
 usage: expect_full.py SITE_DIR SUMMARY_JSON [--no-models]
 
-The fixture (build/test/fixtures/full) sets `pages: docs` and `math: true`. Its
+The fixture (engine/test/fixtures/full) sets `pages: docs` and `math: true`. Its
 docs/ has an index.md home page, a guide folder with an inline embed, an image,
 a README that isn't a page and a leftover _config.yml. Its examples sit in two
 subfolders.
