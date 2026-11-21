@@ -4,7 +4,7 @@
 usage: assemble.py --repo DIR --theme DIR --out DIR --render DIR --site-dir DIR
                    [--repository OWNER/NAME] [--base-path PATH] [--live true|false]
 
-The repo's README.md becomes the home page; each examples/*.scad becomes an
+The repo's README.md (or readme.md) becomes the home page; each examples/*.scad becomes an
 entry on an Examples page, rendered with the OpenSCAD CLI. Files named by
 docs-site.yml's `models:` key (comma-separated paths) go the same way onto a
 Model page before it, for a repo whose main file is the model. Its `libraries:`
@@ -51,6 +51,14 @@ def read_config(repo):
     return cfg
 
 
+def find_readme(repo):
+    """The repo's README: README.md, else one spelled in another case, such as the
+    readme.md NopSCADlib generates. None when there is neither."""
+    if (repo / "README.md").is_file():
+        return "README.md"
+    return next((p.name for p in sorted(repo.iterdir()) if p.is_file() and p.name.lower() == "readme.md"), None)
+
+
 def yaml_str(s):
     return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
@@ -95,6 +103,7 @@ class Linker:
 
     def __init__(self, repo, out, repository, models=(), examples=None, pages_dir=None, pages=()):
         self.repo, self.out, self.repository = repo, out, repository
+        self.readme = find_readme(repo)
         self.models = {m: model_mount(m) for m in models}
         self.examples = examples or {}
         self.pages_dir, self.pages = pages_dir, set(pages)
@@ -119,7 +128,7 @@ class Linker:
             return os.path.relpath(site_path, page_dir or ".") if page_dir else site_path
 
         src = self.repo / rel
-        if rel in ("README.md", "."):
+        if rel in (self.readme, "."):
             return here("index.html") + anchor
         page = self.built(rel)
         if page:
@@ -401,7 +410,8 @@ def main():
     a = ap.parse_args()
 
     repo, out, render_dir = a.repo.resolve(), a.out.resolve(), a.render.resolve()
-    if not (repo / "README.md").is_file():
+    readme_name = find_readme(repo)
+    if not readme_name:
         sys.exit(f"{repo} has no README.md")
     if "/" not in a.repository:
         sys.exit("--repository OWNER/NAME is required outside GitHub Actions")
@@ -453,7 +463,7 @@ def main():
     linker = Linker(repo, out, a.repository, models, {} if ex_mode == "embed" else ex_slugs, pages_dir, pages)
     home_page = f"{pages_dir}/index.md" in pages if pages_dir else False
     if not home_page:
-        readme = linker.rewrite((repo / "README.md").read_text())
+        readme = linker.rewrite((repo / readme_name).read_text())
         # raw: a README is plain Markdown, and Liquid must not read its braces.
         (out / "index.md").write_text("---\ntitle: Home\nlayout: default\nnav_order: 1\npermalink: /\n---\n\n"
                                       "{% raw %}\n" + readme.rstrip() + "\n{% endraw %}\n")
