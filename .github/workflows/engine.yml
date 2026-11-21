@@ -149,3 +149,6 @@ jobs:
 
       - name: Take a lowercase readme.md as the home page
         run: bash engine/test/lowercase_readme.sh engine/assemble.py
+
+      - name: Follow links to <a name> anchors
+        run: bash engine/test/name_anchor.sh engine/check_site.py
