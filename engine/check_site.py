@@ -5,7 +5,7 @@ usage: check_site.py SITE_DIR SUMMARY_JSON [--no-models]
 
 Fails (exit 1, one line per problem) when:
   - a local href or src in any page does not resolve to a file in the site
-  - a link's #fragment names no id in the page it points to
+  - a link's #fragment names no id (or <a name>) in the page it points to
   - a link still points at a .md file
   - an embed's data-src or data-live-src names a mount not in the summary's targets
   - a heading shows a {#id} as text, because Kramdown couldn't use the id
@@ -31,7 +31,10 @@ def main(argv):
 
     def has_id(page_path, frag):
         if page_path not in ids:
-            ids[page_path] = set(re.findall(r'\bid="([^"]+)"', page_path.read_text(errors="replace")))
+            text = page_path.read_text(errors="replace")
+            # Browsers also scroll to <a name="...">, which NopSCADlib's readme.md uses.
+            ids[page_path] = set(re.findall(r'\bid="([^"]+)"', text)) | set(
+                re.findall(r'<a\b[^>]*?\bname="([^"]+)"', text))
         return frag in ids[page_path]
 
     for page in sorted(site.rglob("*.html")):
