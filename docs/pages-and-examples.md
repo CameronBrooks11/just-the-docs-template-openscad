@@ -7,7 +7,8 @@ nav_order: 3
 
 ## The home page
 
-`README.md` is the home page. Images it shows are published beside it. A link to an example goes to that example
+`README.md` is the home page, or `readme.md` in a repo that spells it that way, as NopSCADlib's generated ones
+do. Images it shows are published beside it. A link to an example goes to that example
 on the Examples page, a link to the `examples/` folder goes to the Examples page, and a link to any other file goes
 to the file on GitHub.
 

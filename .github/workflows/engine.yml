@@ -146,3 +146,6 @@ jobs:
 
       - name: Refuse docs-site.yml values the engine does not know
         run: bash engine/test/refuse_bad_values.sh engine/assemble.py
+
+      - name: Take a lowercase readme.md as the home page
+        run: bash engine/test/lowercase_readme.sh engine/assemble.py
