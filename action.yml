@@ -90,7 +90,7 @@ runs:
 
     - name: Install scadman
       if: steps.scadman.outputs.lock == 'true'
-      uses: CameronBrooks11/scadman/setup@v0.1.0-alpha.7
+      uses: CameronBrooks11/scadman/setup@v0.1.0-alpha.10
 
     - name: Assemble the site source
       id: assemble
